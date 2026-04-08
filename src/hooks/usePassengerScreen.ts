@@ -1,0 +1,584 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert } from 'react-native';
+import { useLiveLocation } from './useLiveLocation';
+import {
+  getGooglePlaceDetails,
+  searchGooglePlaces,
+} from '../services/googlePlacesService';
+import {
+  createPassengerRide,
+  getPassengerCoinBalance,
+  getPassengerCurrentRide,
+  getPassengerPendingFeedbackRide,
+  getPassengerRideTracking,
+  submitPassengerRideFeedback,
+  updatePassengerLiveLocation,
+} from '../services/passengerService';
+import {
+  CurrentRideType,
+  INITIAL_REGION,
+  LatLng,
+  OrderPlacedRideType,
+  PendingFeedbackRideType,
+  PlaceSuggestion,
+  RideType,
+  StoredUser,
+} from '../types/passenger';
+import { RideTrackingSnapshot } from '../types/liveTracking';
+
+export function usePassengerScreen() {
+  const [user, setUser] = useState<StoredUser | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [notLoggedIn, setNotLoggedIn] = useState(false);
+
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [destination, setDestination] = useState('');
+  const [pickupCoords, setPickupCoords] = useState<LatLng | null>(null);
+  const [destinationCoords, setDestinationCoords] = useState<LatLng | null>(null);
+  const [pickupSuggestions, setPickupSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [pickupLoading, setPickupLoading] = useState(false);
+  const [destinationLoading, setDestinationLoading] = useState(false);
+  const [pickupSelected, setPickupSelected] = useState(false);
+  const [destinationSelected, setDestinationSelected] = useState(false);
+  const [rideType, setRideType] = useState<RideType>('Immediate');
+  const [isShared, setIsShared] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [passengerCount, setPassengerCount] = useState('1');
+  const [luggageCount, setLuggageCount] = useState('0');
+  const [message, setMessage] = useState('');
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [currentRide, setCurrentRide] = useState<CurrentRideType | null>(null);
+  const [orderPlacedRide, setOrderPlacedRide] =
+    useState<OrderPlacedRideType | null>(null);
+  const [trackingSnapshot, setTrackingSnapshot] =
+    useState<RideTrackingSnapshot | null>(null);
+  const [pendingFeedbackRide, setPendingFeedbackRide] =
+    useState<PendingFeedbackRideType | null>(null);
+  const [rating, setRating] = useState('5');
+  const [wasDriverPolite, setWasDriverPolite] = useState(false);
+  const [wasDriverOnTime, setWasDriverOnTime] = useState(false);
+  const [wasVehicleClean, setWasVehicleClean] = useState(false);
+  const [luggageHandlingRating, setLuggageHandlingRating] = useState('');
+  const [comment, setComment] = useState('');
+  const [reviewRequested, setReviewRequested] = useState(false);
+  const [isSearchingDriver, setIsSearchingDriver] = useState(false);
+  const [trackingUnavailable, setTrackingUnavailable] = useState(false);
+
+  const passengerId = user?.passengerId;
+
+  const shouldShowBottomSheet =
+    !!pickupCoords &&
+    !!destinationCoords &&
+    pickupSelected &&
+    destinationSelected &&
+    reviewRequested &&
+    !currentRide &&
+    !isSearchingDriver;
+
+  const shouldTrackPassengerLocation =
+    !!passengerId &&
+    !!currentRide?.id &&
+    !trackingUnavailable &&
+    !!currentRide.driverId &&
+    currentRide.status !== 'Pending' &&
+    currentRide.status !== 'Completed' &&
+    currentRide.status !== 'Cancelled';
+
+  const mapRegion = useMemo(() => {
+    if (pickupCoords && destinationCoords) {
+      return {
+        latitude: (pickupCoords.latitude + destinationCoords.latitude) / 2,
+        longitude: (pickupCoords.longitude + destinationCoords.longitude) / 2,
+        latitudeDelta: Math.max(
+          Math.abs(pickupCoords.latitude - destinationCoords.latitude) * 1.8,
+          0.02
+        ),
+        longitudeDelta: Math.max(
+          Math.abs(pickupCoords.longitude - destinationCoords.longitude) * 1.8,
+          0.02
+        ),
+      };
+    }
+
+    if (pickupCoords) {
+      return {
+        latitude: pickupCoords.latitude,
+        longitude: pickupCoords.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      };
+    }
+
+    if (destinationCoords) {
+      return {
+        latitude: destinationCoords.latitude,
+        longitude: destinationCoords.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      };
+    }
+
+    return INITIAL_REGION;
+  }, [pickupCoords, destinationCoords]);
+
+  const rideSummary = useMemo(
+    () => ({
+      from: pickupLocation.trim() || 'Not set',
+      to: destination.trim() || 'Not set',
+      rideType,
+      passengers: passengerCount || '1',
+      luggage: luggageCount || '0',
+      shared: rideType === 'Immediate' ? (isShared ? 'Yes' : 'No') : 'No',
+      scheduledTime: rideType === 'Scheduled' ? scheduledTime || 'Not set' : '-',
+    }),
+    [
+      pickupLocation,
+      destination,
+      rideType,
+      passengerCount,
+      luggageCount,
+      isShared,
+      scheduledTime,
+    ]
+  );
+
+  const loadUser = async () => {
+    try {
+      setLoadingUser(true);
+      const storedUser = await AsyncStorage.getItem('user');
+
+      if (!storedUser) {
+        setNotLoggedIn(true);
+        return;
+      }
+
+      const parsedUser: StoredUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      if (!parsedUser.passengerId) {
+        setMessage('Passenger account data is missing. Please login again.');
+      }
+    } catch (error) {
+      console.log('LOAD USER ERROR:', error);
+      setNotLoggedIn(true);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  const handleGetCoinBalance = async () => {
+    if (!passengerId) return;
+
+    try {
+      const data = await getPassengerCoinBalance(passengerId);
+      setCoinBalance(data.coinBalance);
+    } catch (error: any) {
+      setMessage(error?.response?.data || 'Failed to load coin balance.');
+    }
+  };
+
+  const handleGetCurrentRide = async () => {
+    if (!passengerId) return;
+
+    try {
+      const data = await getPassengerCurrentRide(passengerId);
+      setCurrentRide(data);
+      setMessage('');
+      setIsSearchingDriver(false);
+    } catch (error: any) {
+      setCurrentRide(null);
+      setOrderPlacedRide(null);
+      setTrackingSnapshot(null);
+      setTrackingUnavailable(false);
+
+      if (error?.response?.status === 404) {
+        setMessage(error?.response?.data || 'No current ride.');
+      } else {
+        setMessage(error?.response?.data || 'Failed to load ride.');
+      }
+    }
+  };
+
+  const handleGetPendingFeedbackRide = async () => {
+    if (!passengerId) return;
+
+    try {
+      const data = await getPassengerPendingFeedbackRide(passengerId);
+      setPendingFeedbackRide(data);
+    } catch (error: any) {
+      setPendingFeedbackRide(null);
+    }
+  };
+
+  const searchPlaces = async (query: string, type: 'pickup' | 'destination') => {
+    if (query.trim().length < 3) {
+      if (type === 'pickup') {
+        setPickupSuggestions([]);
+      } else {
+        setDestinationSuggestions([]);
+      }
+      return;
+    }
+
+    try {
+      if (type === 'pickup') {
+        setPickupLoading(true);
+      } else {
+        setDestinationLoading(true);
+      }
+
+      const suggestions = await searchGooglePlaces(query);
+
+      if (type === 'pickup') {
+        setPickupSuggestions(suggestions);
+      } else {
+        setDestinationSuggestions(suggestions);
+      }
+    } catch (error: any) {
+      console.log('PLACES SEARCH ERROR:', error);
+      setMessage(error?.message || 'Failed to search locations.');
+    } finally {
+      if (type === 'pickup') {
+        setPickupLoading(false);
+      } else {
+        setDestinationLoading(false);
+      }
+    }
+  };
+
+  const handleSelectPlace = async (
+    suggestion: PlaceSuggestion,
+    type: 'pickup' | 'destination'
+  ) => {
+    try {
+      const data = await getGooglePlaceDetails(suggestion.placeId);
+
+      if (type === 'pickup') {
+        setPickupLocation(data.label);
+        setPickupCoords(data.coords);
+        setPickupSuggestions([]);
+        setPickupSelected(true);
+      } else {
+        setDestination(data.label);
+        setDestinationCoords(data.coords);
+        setDestinationSuggestions([]);
+        setDestinationSelected(true);
+      }
+
+      setMessage('');
+    } catch (error: any) {
+      console.log('PLACE DETAILS ERROR:', error);
+      setMessage(error?.message || 'Failed to load place details.');
+    }
+  };
+
+  const handlePickupTextChange = (text: string) => {
+    setPickupLocation(text);
+    setPickupSelected(false);
+    setPickupCoords(null);
+    setReviewRequested(false);
+    setIsSearchingDriver(false);
+    setOrderPlacedRide(null);
+    searchPlaces(text, 'pickup');
+  };
+
+  const handleDestinationTextChange = (text: string) => {
+    setDestination(text);
+    setDestinationSelected(false);
+    setDestinationCoords(null);
+    setReviewRequested(false);
+    setIsSearchingDriver(false);
+    setOrderPlacedRide(null);
+    searchPlaces(text, 'destination');
+  };
+
+  const handleReviewRide = () => {
+    if (!pickupSelected || !destinationSelected || !pickupCoords || !destinationCoords) {
+      Alert.alert(
+        'Validation',
+        'Please select real pickup and destination locations from the suggestions first.'
+      );
+      return;
+    }
+
+    const parsedPassengerCount = Number(passengerCount);
+    const parsedLuggageCount = Number(luggageCount);
+
+    if (Number.isNaN(parsedPassengerCount) || parsedPassengerCount < 1) {
+      Alert.alert('Validation', 'Passenger count must be at least 1.');
+      return;
+    }
+
+    if (Number.isNaN(parsedLuggageCount) || parsedLuggageCount < 0) {
+      Alert.alert('Validation', 'Luggage count cannot be negative.');
+      return;
+    }
+
+    if (rideType === 'Scheduled' && !scheduledTime.trim()) {
+      Alert.alert('Validation', 'Please choose the scheduled time.');
+      return;
+    }
+
+    setReviewRequested(true);
+  };
+
+  const resetRideForm = () => {
+    setPickupLocation('');
+    setDestination('');
+    setPickupCoords(null);
+    setDestinationCoords(null);
+    setPickupSuggestions([]);
+    setDestinationSuggestions([]);
+    setPickupSelected(false);
+    setDestinationSelected(false);
+    setReviewRequested(false);
+    setRideType('Immediate');
+    setIsShared(false);
+    setScheduledTime('');
+    setPassengerCount('1');
+    setLuggageCount('0');
+  };
+
+  const handleDismissOrderPlaced = () => {
+    setOrderPlacedRide(null);
+  };
+
+  const handleCreateRide = async () => {
+    if (!passengerId) {
+      Alert.alert('Error', 'Please login again.');
+      return;
+    }
+
+    if (!pickupSelected || !destinationSelected || !pickupCoords || !destinationCoords) {
+      Alert.alert(
+        'Validation',
+        'Please select real pickup and destination locations from the suggestions.'
+      );
+      return;
+    }
+
+    const parsedPassengerCount = Number(passengerCount);
+    const parsedLuggageCount = Number(luggageCount);
+
+    if (Number.isNaN(parsedPassengerCount) || parsedPassengerCount < 1) {
+      Alert.alert('Validation', 'Passenger count must be at least 1.');
+      return;
+    }
+
+    if (Number.isNaN(parsedLuggageCount) || parsedLuggageCount < 0) {
+      Alert.alert('Validation', 'Luggage count cannot be negative.');
+      return;
+    }
+
+    if (rideType === 'Scheduled' && !scheduledTime.trim()) {
+      Alert.alert('Validation', 'Please choose the scheduled time.');
+      return;
+    }
+
+    try {
+      const rideSummarySnapshot = rideSummary;
+      setIsSearchingDriver(true);
+      setMessage('Looking for a driver for you...');
+
+      await createPassengerRide({
+        passengerId,
+        pickupLocation,
+        pickupLatitude: pickupCoords.latitude,
+        pickupLongitude: pickupCoords.longitude,
+        destination,
+        destinationLatitude: destinationCoords.latitude,
+        destinationLongitude: destinationCoords.longitude,
+        rideType,
+        isShared: rideType === 'Immediate' ? isShared : false,
+        scheduledTime: rideType === 'Scheduled' ? scheduledTime : null,
+        passengerCount: parsedPassengerCount,
+        luggageCount: parsedLuggageCount,
+      });
+
+      const currentRideData = await getPassengerCurrentRide(passengerId);
+      setCurrentRide(currentRideData);
+      setTrackingUnavailable(false);
+      setOrderPlacedRide({
+        rideSummary: rideSummarySnapshot,
+        rideId: currentRideData?.id,
+        status: currentRideData?.status,
+      });
+      setMessage('Your ride request has been placed successfully.');
+      setIsSearchingDriver(false);
+      resetRideForm();
+    } catch (error: any) {
+      setIsSearchingDriver(false);
+      const msg = error?.response?.data || 'Failed to create ride';
+      setMessage(msg);
+      Alert.alert('Error', msg);
+    }
+  };
+
+  const handleRefreshTrackingSnapshot = async () => {
+    if (!currentRide?.id) return;
+
+    try {
+      const data = await getPassengerRideTracking(currentRide.id);
+      setTrackingSnapshot(data);
+      setTrackingUnavailable(false);
+    } catch (error: any) {
+      if (error?.response?.status === 404 || error?.response?.status === 401) {
+        setTrackingUnavailable(true);
+        return;
+      }
+
+      console.log('PASSENGER TRACKING ERROR:', error?.response?.data || error?.message);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!passengerId || !pendingFeedbackRide) {
+      Alert.alert('Error', 'No completed ride is waiting for feedback.');
+      return;
+    }
+
+    try {
+      const data = await submitPassengerRideFeedback({
+        rideId: pendingFeedbackRide.id,
+        passengerId,
+        driverId: pendingFeedbackRide.driverId,
+        rating: Number(rating),
+        wasDriverPolite,
+        wasDriverOnTime,
+        wasVehicleClean,
+        luggageHandlingRating: luggageHandlingRating
+          ? Number(luggageHandlingRating)
+          : null,
+        comment,
+      });
+
+      setMessage(data);
+      setRating('5');
+      setWasDriverPolite(false);
+      setWasDriverOnTime(false);
+      setWasVehicleClean(false);
+      setLuggageHandlingRating('');
+      setComment('');
+      setPendingFeedbackRide(null);
+
+      await handleGetCoinBalance();
+      await handleGetCurrentRide();
+      await handleGetPendingFeedbackRide();
+    } catch (error: any) {
+      const msg = error?.response?.data || 'Failed to submit feedback';
+      setMessage(msg);
+      Alert.alert('Feedback Failed', msg);
+    }
+  };
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  useEffect(() => {
+    if (!passengerId) return;
+
+    handleGetCoinBalance();
+    handleGetCurrentRide();
+    handleGetPendingFeedbackRide();
+  }, [passengerId]);
+
+  useEffect(() => {
+    if (!currentRide?.id || trackingUnavailable) return;
+
+    handleRefreshTrackingSnapshot();
+
+    const intervalId = setInterval(() => {
+      handleRefreshTrackingSnapshot();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [currentRide?.id, trackingUnavailable]);
+
+  useLiveLocation({
+    enabled: shouldTrackPassengerLocation,
+    onLocation: async (position) => {
+      if (!passengerId || !currentRide?.id) return;
+
+      try {
+        await updatePassengerLiveLocation({
+          rideId: currentRide.id,
+          passengerId,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          heading: position.coords.heading ?? null,
+          speed: position.coords.speed ?? null,
+          accuracy: position.coords.accuracy ?? null,
+        });
+      } catch (error: any) {
+        if (error?.response?.status === 404 || error?.response?.status === 401) {
+          setTrackingUnavailable(true);
+          return;
+        }
+
+        console.log(
+          'PASSENGER LOCATION UPDATE ERROR:',
+          error?.response?.data || error?.message
+        );
+      }
+    },
+  });
+
+  return {
+    user,
+    loadingUser,
+    notLoggedIn,
+    pickupLocation,
+    destination,
+    pickupCoords,
+    destinationCoords,
+    pickupSuggestions,
+    destinationSuggestions,
+    pickupLoading,
+    destinationLoading,
+    rideType,
+    isShared,
+    scheduledTime,
+    passengerCount,
+    luggageCount,
+    message,
+    coinBalance,
+    currentRide,
+    orderPlacedRide,
+    trackingSnapshot,
+    trackingUnavailable,
+    pendingFeedbackRide,
+    rating,
+    wasDriverPolite,
+    wasDriverOnTime,
+    wasVehicleClean,
+    luggageHandlingRating,
+    comment,
+    shouldShowBottomSheet,
+    isSearchingDriver,
+    mapRegion,
+    rideSummary,
+    handlePickupTextChange,
+    handleDestinationTextChange,
+    handleSelectPlace,
+    handleReviewRide,
+    setPassengerCount,
+    setLuggageCount,
+    setRideType,
+    setScheduledTime,
+    setIsShared,
+    setRating,
+    setWasDriverPolite,
+    setWasDriverOnTime,
+    setWasVehicleClean,
+    setLuggageHandlingRating,
+    setComment,
+    handleGetCurrentRide,
+    handleRefreshTrackingSnapshot,
+    handleCreateRide,
+    handleDismissOrderPlaced,
+    handleSubmitFeedback,
+  };
+}
