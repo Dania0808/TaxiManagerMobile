@@ -8,6 +8,7 @@ type PassengerBottomSheetProps = {
   rideType: RideType;
   pickupCoords?: LatLng | null;
   destinationCoords?: LatLng | null;
+  onBack: () => void;
   onOrderNow: () => void;
 };
 
@@ -16,6 +17,7 @@ export default function PassengerBottomSheet({
   rideType,
   pickupCoords,
   destinationCoords,
+  onBack,
   onOrderNow,
 }: PassengerBottomSheetProps) {
   const hasRoute = !!pickupCoords && !!destinationCoords;
@@ -41,83 +43,93 @@ export default function PassengerBottomSheet({
       };
 
   return (
-    <View style={styles.bottomSheet}>
-      <Text style={styles.bottomTitle}>Review Your Ride</Text>
-      <Text style={styles.formSubtitle}>
-        Check your trip details before sending the request to nearby drivers.
-      </Text>
+      <View style={styles.bottomSheetBackdrop}>
+      <View style={styles.bottomSheet}>
+        <View style={styles.bottomSheetContent}>
+          <Text style={styles.bottomTitle}>Review Your Ride</Text>
+          <Text style={styles.formSubtitle}>
+            Check your trip details before sending the request to nearby drivers.
+          </Text>
 
-      {hasRoute && (
-        <View style={styles.bottomMapWrapper}>
-          <MapView style={styles.bottomMap} region={previewRegion}>
-            <Marker
-              coordinate={pickupCoords!}
-              title="Pickup"
-              description={rideSummary.from}
-              pinColor="green"
-            />
+          {hasRoute && (
+            <View style={styles.bottomMapWrapper}>
+              <MapView style={styles.bottomMap} region={previewRegion}>
+                <Marker
+                  coordinate={pickupCoords!}
+                  title="Pickup"
+                  description={rideSummary.from}
+                  pinColor="green"
+                />
 
-            <Marker
-              coordinate={destinationCoords!}
-              title="Destination"
-              description={rideSummary.to}
-              pinColor="red"
-            />
+                <Marker
+                  coordinate={destinationCoords!}
+                  title="Destination"
+                  description={rideSummary.to}
+                  pinColor="red"
+                />
 
-            <Polyline
-              coordinates={[pickupCoords!, destinationCoords!]}
-              strokeWidth={4}
-              strokeColor="#2563eb"
-            />
-          </MapView>
-        </View>
-      )}
+                <Polyline
+                  coordinates={[pickupCoords!, destinationCoords!]}
+                  strokeWidth={4}
+                  strokeColor="#2563eb"
+                />
+              </MapView>
+            </View>
+          )}
 
-      <View style={styles.rideDetailsBox}>
-        <View style={styles.bottomSheetRow}>
-          <Text style={styles.bottomLabel}>From</Text>
-          <Text style={styles.bottomValue}>{rideSummary.from}</Text>
-        </View>
+          <View style={styles.rideDetailsBox}>
+            <View style={styles.bottomSheetRow}>
+              <Text style={styles.bottomLabel}>From</Text>
+              <Text style={styles.bottomValue}>{rideSummary.from}</Text>
+            </View>
 
-        <View style={styles.bottomSheetRow}>
-          <Text style={styles.bottomLabel}>To</Text>
-          <Text style={styles.bottomValue}>{rideSummary.to}</Text>
-        </View>
+            <View style={styles.bottomSheetRow}>
+              <Text style={styles.bottomLabel}>To</Text>
+              <Text style={styles.bottomValue}>{rideSummary.to}</Text>
+            </View>
 
-        <View style={styles.bottomSheetRow}>
-          <Text style={styles.bottomLabel}>Passengers</Text>
-          <Text style={styles.bottomValue}>{rideSummary.passengers}</Text>
-        </View>
+            <View style={styles.bottomSheetRow}>
+              <Text style={styles.bottomLabel}>Passengers</Text>
+              <Text style={styles.bottomValue}>{rideSummary.passengers}</Text>
+            </View>
 
-        <View style={styles.bottomSheetRow}>
-          <Text style={styles.bottomLabel}>Bags</Text>
-          <Text style={styles.bottomValue}>{rideSummary.luggage}</Text>
-        </View>
+            <View style={styles.bottomSheetRow}>
+              <Text style={styles.bottomLabel}>Bags</Text>
+              <Text style={styles.bottomValue}>{rideSummary.luggage}</Text>
+            </View>
 
-        <View style={styles.bottomSheetRow}>
-          <Text style={styles.bottomLabel}>Ride Type</Text>
-          <Text style={styles.bottomValue}>{rideSummary.rideType}</Text>
-        </View>
+            <View style={styles.bottomSheetRow}>
+              <Text style={styles.bottomLabel}>Ride Type</Text>
+              <Text style={styles.bottomValue}>{rideSummary.rideType}</Text>
+            </View>
 
-        {rideType === 'Immediate' && (
-          <View style={styles.bottomSheetRow}>
-            <Text style={styles.bottomLabel}>Shared Ride</Text>
-            <Text style={styles.bottomValue}>{rideSummary.shared}</Text>
+            {rideType === 'Immediate' && (
+              <View style={styles.bottomSheetRow}>
+                <Text style={styles.bottomLabel}>Shared Ride</Text>
+                <Text style={styles.bottomValue}>{rideSummary.shared}</Text>
+              </View>
+            )}
+
+            {rideType === 'Scheduled' && (
+              <View style={styles.bottomSheetRow}>
+                <Text style={styles.bottomLabel}>Scheduled</Text>
+                <Text style={styles.bottomValue}>{rideSummary.scheduledTime}</Text>
+              </View>
+            )}
           </View>
-        )}
 
-        {rideType === 'Scheduled' && (
-          <View style={styles.bottomSheetRow}>
-            <Text style={styles.bottomLabel}>Scheduled</Text>
-            <Text style={styles.bottomValue}>{rideSummary.scheduledTime}</Text>
+          <View style={styles.bottomButtonWrap}>
+            <TouchableOpacity style={styles.primaryButton} onPress={onOrderNow}>
+              <Text style={styles.primaryButtonText}>Order Now</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
 
-      <View style={styles.bottomButtonWrap}>
-        <TouchableOpacity style={styles.primaryButton} onPress={onOrderNow}>
-          <Text style={styles.primaryButtonText}>Order Now</Text>
-        </TouchableOpacity>
+          <View style={styles.bottomBackRow}>
+            <TouchableOpacity onPress={onBack} style={styles.bottomBackButton}>
+              <Text style={styles.bottomBackHint}>Back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </View>
   );

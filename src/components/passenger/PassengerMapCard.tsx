@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { CurrentRideType, LatLng } from '../../types/passenger';
@@ -63,15 +63,6 @@ export default function PassengerMapCard({
           />
         )}
       </MapView>
-
-      <View style={styles.mapOverlayInfo}>
-        <Text style={styles.mapOverlayTitle}>Trip Map</Text>
-        <Text style={styles.mapOverlaySubtitle}>
-          {pickupCoords && destinationCoords
-            ? 'Pickup and destination selected'
-            : 'Choose your trip locations to preview the route'}
-        </Text>
-      </View>
     </View>
   );
 }

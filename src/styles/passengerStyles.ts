@@ -3,12 +3,12 @@ import { StyleSheet } from 'react-native';
 export const passengerStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f5f7fb',
+    backgroundColor: '#f3f4f6',
   },
 
   mainContent: {
     flex: 1,
-    backgroundColor: '#f5f7fb',
+    backgroundColor: '#f3f4f6',
   },
 
   container: {
@@ -28,20 +28,166 @@ export const passengerStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f4f6',
   },
 
   mapContainer: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#e5e7eb',
   },
 
   formContainer: {
     flex: 1,
-    marginTop: -12,
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    backgroundColor: '#f5f7fb',
+    marginTop: -76,
+    paddingHorizontal: 16,
+    paddingBottom: 96,
+    backgroundColor: '#f3f4f6',
+  },
+
+  floatingFormContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 48,
+  },
+
+  floatingFormCard: {
+    backgroundColor: 'rgba(255,255,255,0.98)',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 8,
+    maxHeight: '82%',
+    overflow: 'hidden',
+  },
+
+  floatingFormHeader: {
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+
+  floatingHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: '#d1d5db',
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+
+  floatingHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  floatingFormTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 3,
+  },
+
+  floatingFormSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+
+  floatingFormScroll: {
+    maxHeight: '100%',
+  },
+
+  floatingFormScrollContent: {
+    paddingHorizontal: 0,
+    paddingBottom: 8,
+  },
+
+  collapsedFormSummary: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+
+  collapsedFormText: {
+    fontSize: 14,
+    color: '#4b5563',
+    fontWeight: '600',
+  },
+
+  schedulePreviewCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    backgroundColor: '#f9fafb',
+    marginBottom: 10,
+  },
+
+  schedulePreviewLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6b7280',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  schedulePreviewValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(17,24,39,0.32)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 6,
+  },
+
+  modalSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginBottom: 16,
+  },
+
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
   },
 
   headerRow: {
@@ -58,7 +204,7 @@ export const passengerStyles = StyleSheet.create({
 
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 4,
     color: '#111827',
   },
@@ -70,7 +216,7 @@ export const passengerStyles = StyleSheet.create({
 
   coinsBadge: {
     borderWidth: 1,
-    borderColor: '#dbe3f0',
+    borderColor: '#e5e7eb',
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -98,21 +244,24 @@ export const passengerStyles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     left: 16,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: 'rgba(255,255,255,0.96)',
     borderRadius: 18,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#dbe3f0',
+    borderColor: '#e5e7eb',
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 
   coinsText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#111827',
   },
@@ -120,29 +269,47 @@ export const passengerStyles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 16,
-    padding: 14,
-    backgroundColor: '#ffffff',
-    marginBottom: 14,
-  },
-
-  formCard: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 28,
+    padding: 18,
     backgroundColor: '#ffffff',
     marginBottom: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+
+  formCard: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 18,
+    backgroundColor: '#ffffff',
+  },
+
+  formHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+
+  formHeaderIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+
+  formHeaderTextWrap: {
+    flex: 1,
   },
 
   formTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#111827',
     marginBottom: 4,
   },
@@ -150,7 +317,7 @@ export const passengerStyles = StyleSheet.create({
   formSubtitle: {
     fontSize: 13,
     color: '#6b7280',
-    marginBottom: 14,
+    marginBottom: 0,
   },
 
   fieldLabel: {
@@ -162,9 +329,24 @@ export const passengerStyles = StyleSheet.create({
 
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '700',
     color: '#111827',
+  },
+
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  cardTitleIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
 
   map: {
@@ -177,9 +359,9 @@ export const passengerStyles = StyleSheet.create({
   mapHeroCard: {
     flex: 1,
     overflow: 'hidden',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    backgroundColor: '#dbeafe',
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+    backgroundColor: '#e5e7eb',
   },
 
   mapHero: {
@@ -192,20 +374,35 @@ export const passengerStyles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 18,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(255,255,255,0.93)',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+
+  mapOverlayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  mapOverlayIconWrap: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
 
   mapOverlayTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#111827',
   },
 
   mapOverlaySubtitle: {
-    marginTop: 2,
+    marginTop: 8,
     fontSize: 12,
     color: '#4b5563',
   },
@@ -214,9 +411,11 @@ export const passengerStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     marginBottom: 10,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#f9fafb',
+    color: '#111827',
   },
 
   searchLoader: {
@@ -226,7 +425,7 @@ export const passengerStyles = StyleSheet.create({
   suggestionsBox: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: '#ffffff',
     marginBottom: 10,
     overflow: 'hidden',
@@ -292,16 +491,16 @@ export const passengerStyles = StyleSheet.create({
   segmentButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
   },
 
   segmentButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: '#111827',
+    borderColor: '#111827',
   },
 
   segmentButtonText: {
@@ -329,8 +528,8 @@ export const passengerStyles = StyleSheet.create({
     marginTop: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 14,
+    padding: 12,
     backgroundColor: '#f9fafb',
   },
 
@@ -345,8 +544,8 @@ export const passengerStyles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 14,
+    backgroundColor: '#111827',
+    paddingVertical: 15,
     borderRadius: 14,
     alignItems: 'center',
   },
@@ -359,11 +558,11 @@ export const passengerStyles = StyleSheet.create({
 
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#d1d5db',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f9fafb',
   },
 
   secondaryButtonText: {
@@ -374,15 +573,15 @@ export const passengerStyles = StyleSheet.create({
 
   statusBanner: {
     borderWidth: 1,
-    borderColor: '#ececec',
-    borderRadius: 12,
-    padding: 10,
-    backgroundColor: '#fafafa',
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    padding: 12,
+    backgroundColor: '#f9fafb',
     marginBottom: 12,
   },
 
   statusTitle: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 4,
     color: '#111827',
   },
@@ -390,11 +589,11 @@ export const passengerStyles = StyleSheet.create({
   driverCard: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#eeeeee',
-    borderRadius: 14,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
     padding: 12,
     marginBottom: 12,
-    backgroundColor: '#fcfcfc',
+    backgroundColor: '#f9fafb',
   },
 
   driverImage: {
@@ -417,9 +616,10 @@ export const passengerStyles = StyleSheet.create({
 
   rideDetailsBox: {
     borderWidth: 1,
-    borderColor: '#eeeeee',
-    borderRadius: 12,
-    padding: 10,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    padding: 12,
+    backgroundColor: '#fcfcfc',
   },
 
   switchRow: {
@@ -436,7 +636,7 @@ export const passengerStyles = StyleSheet.create({
   message: {
     marginTop: 10,
     textAlign: 'center',
-    color: '#2563eb',
+    color: '#1d4ed8',
     fontWeight: '600',
     paddingHorizontal: 16,
   },
@@ -448,7 +648,7 @@ export const passengerStyles = StyleSheet.create({
     right: 20,
     backgroundColor: '#ffffff',
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 22,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -468,8 +668,8 @@ export const passengerStyles = StyleSheet.create({
 
   orderPlacedCard: {
     borderWidth: 1,
-    borderColor: '#dbe3f0',
-    borderRadius: 20,
+    borderColor: '#e5e7eb',
+    borderRadius: 28,
     padding: 18,
     backgroundColor: '#ffffff',
     shadowColor: '#000',
@@ -477,6 +677,7 @@ export const passengerStyles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
+    marginBottom: 64,
   },
 
   orderPlacedIconWrap: {
@@ -486,7 +687,7 @@ export const passengerStyles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#dcfce7',
+    backgroundColor: '#ecfdf5',
     marginBottom: 14,
   },
 
@@ -533,24 +734,35 @@ export const passengerStyles = StyleSheet.create({
     marginTop: 14,
   },
 
-  bottomSheet: {
+  bottomSheetBackdrop: {
     position: 'absolute',
-    bottom: 20,
-    left: 12,
-    right: 12,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(17,24,39,0.28)',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+
+  bottomSheet: {
     backgroundColor: '#ffffff',
     padding: 18,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#dbe3f0',
+    borderColor: '#e5e7eb',
     elevation: 12,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: -3 },
+    shadowOffset: { width: 0, height: 0 },
+    flex: 1,
+  },
+
+  bottomSheetContent: {
+    flex: 1,
+    justifyContent: 'center',
   },
 
   bottomTitle: {
@@ -585,15 +797,36 @@ export const passengerStyles = StyleSheet.create({
     marginTop: 14,
   },
 
+  bottomBackHint: {
+    color: '#374151',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  bottomBackRow: {
+    marginTop: 14,
+    alignItems: 'flex-start',
+  },
+
+  bottomBackButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+
   bottomMapWrapper: {
     marginBottom: 14,
-    borderRadius: 16,
+    marginTop: 4,
+    marginHorizontal: -18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
     overflow: 'hidden',
   },
 
   bottomMap: {
     width: '100%',
-    height: 150,
+    height: 300,
   },
 
   trackingMap: {
@@ -604,8 +837,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   linkButton: {
-    color: '#2563eb',
+    color: '#111827',
     fontWeight: '700',
   },
-
 });

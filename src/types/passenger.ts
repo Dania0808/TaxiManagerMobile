@@ -4,6 +4,7 @@ export type StoredUser = {
   id?: number;
   fullName?: string;
   email?: string;
+  phoneNumber?: string;
   role?: string;
   passengerId?: number | null;
   driverId?: number | null;
@@ -63,6 +64,23 @@ export type OrderPlacedRideType = {
   rideSummary: RideSummary;
   rideId?: number;
   status?: string;
+};
+
+export type PassengerProfileType = {
+  passengerId?: number;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string | null;
+  profileImageUrl?: string | null;
+};
+
+export type PassengerRideHistoryItemType = {
+  id: number;
+  pickupLocation?: string;
+  destination?: string;
+  rideType?: string;
+  status?: string;
+  createdAt?: string;
 };
 
 export type PlaceSuggestion = {

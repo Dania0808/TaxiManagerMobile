@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button, Image, Text, View } from 'react-native';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { CurrentRideType } from '../../types/passenger';
@@ -15,7 +16,12 @@ export default function CurrentRideCard({
 }: CurrentRideCardProps) {
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Current Ride</Text>
+      <View style={styles.cardTitleRow}>
+        <View style={styles.cardTitleIconWrap}>
+          <MaterialCommunityIcons name="steering" size={18} color="#111827" />
+        </View>
+        <Text style={styles.cardTitle}>Current Ride</Text>
+      </View>
 
       {currentRide ? (
         <>
@@ -68,7 +74,7 @@ export default function CurrentRideCard({
 
           <View style={styles.rideDetailsBox}>
             <Text>
-              <Text style={styles.bold}>Ride Id:</Text> {currentRide.id}
+              <Text style={styles.bold}>Ride Id:</Text> #{currentRide.id}
             </Text>
             <Text>
               <Text style={styles.bold}>Pickup:</Text> {currentRide.pickupLocation}

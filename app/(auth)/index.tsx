@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -68,56 +68,173 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Taxi Manager Login</Text>
+      <View style={styles.topHalf}>
+        <View style={styles.logoPlaceholder}>
+          <Text style={styles.logoPlaceholderText}>APP LOGO</Text>
+        </View>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        autoCapitalize="none"
-      />
+        <Text style={styles.heroTitle}>Taxi Manager</Text>
+        <Text style={styles.heroSubtitle}>
+          Your daily rides, managed with clarity.
+        </Text>
+      </View>
 
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
+      <View style={styles.bottomHalf}>
+        <View style={styles.formCard}>
+          <Text style={styles.title}>Login</Text>
+          <Text style={styles.subtitle}>
+            Sign in with your email and password.
+          </Text>
 
-      {loading ? (
-        <ActivityIndicator size="large" />
-      ) : (
-        <Button title="Login" onPress={handleLogin} />
-      )}
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="#9ca3af"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            autoCapitalize="none"
+          />
 
-      <Button
-        title="Create new account"
-        onPress={() => router.push('/register')}
-      />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+          />
 
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+          {loading ? (
+            <ActivityIndicator size="large" color="#111827" style={styles.loader} />
+          ) : (
+            <Pressable style={styles.primaryButton} onPress={handleLogin}>
+              <Text style={styles.primaryButtonText}>Login</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            style={styles.secondaryAction}
+            onPress={() => router.push('/register')}
+          >
+            <Text style={styles.secondaryActionText}>Create new account</Text>
+          </Pressable>
+
+          {message ? <Text style={styles.message}>{message}</Text> : null}
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: {
-    fontSize: 26,
+  container: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+  },
+  topHalf: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#e5e7eb',
+  },
+  logoPlaceholder: {
+    width: 180,
+    height: 180,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderStyle: 'dashed',
+    backgroundColor: '#f9fafb',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
+  },
+  logoPlaceholderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    color: '#6b7280',
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: '#4b5563',
     textAlign: 'center',
+  },
+  bottomHalf: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+    marginTop: -26,
+  },
+  formCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 22,
   },
   input: {
     borderWidth: 1,
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 6,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 12,
+    borderRadius: 14,
+    color: '#111827',
+  },
+  loader: {
+    marginVertical: 8,
+  },
+  primaryButton: {
+    marginTop: 6,
+    borderRadius: 14,
+    backgroundColor: '#111827',
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  secondaryAction: {
+    marginTop: 18,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  secondaryActionText: {
+    color: '#4b5563',
+    fontSize: 14,
+    fontWeight: '600',
   },
   message: {
-    marginTop: 15,
+    marginTop: 14,
     textAlign: 'center',
-    color: 'blue',
+    color: '#1d4ed8',
   },
 });

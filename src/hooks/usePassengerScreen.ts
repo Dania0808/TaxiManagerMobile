@@ -324,6 +324,10 @@ export function usePassengerScreen() {
     setReviewRequested(true);
   };
 
+  const handleCloseReviewRide = () => {
+    setReviewRequested(false);
+  };
+
   const resetRideForm = () => {
     setPickupLocation('');
     setDestination('');
@@ -564,6 +568,7 @@ export function usePassengerScreen() {
     handleDestinationTextChange,
     handleSelectPlace,
     handleReviewRide,
+    handleCloseReviewRide,
     setPassengerCount,
     setLuggageCount,
     setRideType,

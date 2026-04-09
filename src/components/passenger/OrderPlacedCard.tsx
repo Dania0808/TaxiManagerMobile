@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { RideSummary } from '../../types/passenger';
@@ -7,7 +8,6 @@ type OrderPlacedCardProps = {
   rideId?: number;
   status?: string;
   onTrackRide: () => void;
-  onClose: () => void;
 };
 
 export default function OrderPlacedCard({
@@ -15,12 +15,11 @@ export default function OrderPlacedCard({
   rideId,
   status,
   onTrackRide,
-  onClose,
 }: OrderPlacedCardProps) {
   return (
     <View style={styles.orderPlacedCard}>
       <View style={styles.orderPlacedIconWrap}>
-        <Text style={styles.orderPlacedIcon}>OK</Text>
+        <MaterialCommunityIcons name="check-circle-outline" size={30} color="#166534" />
       </View>
 
       <Text style={styles.orderPlacedTitle}>Order Placed</Text>
@@ -82,13 +81,6 @@ export default function OrderPlacedCard({
       <View style={styles.orderPlacedActions}>
         <TouchableOpacity style={styles.primaryButton} onPress={onTrackRide}>
           <Text style={styles.primaryButtonText}>Track My Ride</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={onClose}
-        >
-          <Text style={styles.secondaryButtonText}>Close</Text>
         </TouchableOpacity>
       </View>
     </View>

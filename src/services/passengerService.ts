@@ -1,5 +1,5 @@
-import api from './api';
 import { RideTrackingSnapshot } from '../types/liveTracking';
+import api from './api';
 
 export async function getPassengerCoinBalance(passengerId: number) {
   const response = await api.get(`/Rides/coins/${passengerId}`);
@@ -66,5 +66,15 @@ export async function getPassengerRideTracking(
   rideId: number
 ): Promise<RideTrackingSnapshot> {
   const response = await api.get(`/RideTracking/passenger/${rideId}`);
+  return response.data;
+}
+
+export async function getPassengerProfile(passengerId: number) {
+  const response = await api.get(`/Passengers/${passengerId}`);
+  return response.data;
+}
+
+export async function getPassengerRideHistory(passengerId: number) {
+  const response = await api.get(`/Rides/history/${passengerId}`);
   return response.data;
 }

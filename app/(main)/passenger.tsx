@@ -1,5 +1,15 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import AppNavbar from '../../src/components/AppNavbar';
 import CurrentRideCard from '../../src/components/passenger/CurrentRideCard';
@@ -13,6 +23,7 @@ import { passengerStyles as styles } from '../../src/styles/passengerStyles';
 
 export default function PassengerScreen() {
   const router = useRouter();
+  const [isRideFormExpanded, setIsRideFormExpanded] = useState(true);
   const {
     user,
     loadingUser,
@@ -45,11 +56,11 @@ export default function PassengerScreen() {
     isSearchingDriver,
     mapRegion,
     rideSummary,
-
     handlePickupTextChange,
     handleDestinationTextChange,
     handleSelectPlace,
     handleReviewRide,
+    handleCloseReviewRide,
     setPassengerCount,
     setLuggageCount,
     setRideType,
@@ -62,7 +73,6 @@ export default function PassengerScreen() {
     setLuggageHandlingRating,
     setComment,
     handleCreateRide,
-    handleDismissOrderPlaced,
     handleGetCurrentRide,
     handleSubmitFeedback,
   } = usePassengerScreen();
@@ -82,7 +92,10 @@ export default function PassengerScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppNavbar fullName={user?.fullName} />
+      <AppNavbar
+        fullName={user?.fullName}
+        profileRoute="/(main)/passenger-profile"
+      />
 
       <View style={styles.mapContainer}>
         <PassengerMapCard
@@ -95,55 +108,103 @@ export default function PassengerScreen() {
         />
 
         <View style={styles.coinsOverlay}>
-          <Text style={styles.coinsText}>🪙 {coinBalance} ₪</Text>
+          <MaterialCommunityIcons name="cash-multiple" size={18} color="#111827" />
+          <Text style={styles.coinsText}>{coinBalance} shekels</Text>
         </View>
       </View>
 
-      <View style={styles.formContainer}>
-        {orderPlacedRide ? (
+      {orderPlacedRide ? (
+        <View style={styles.formContainer}>
           <OrderPlacedCard
             rideSummary={orderPlacedRide.rideSummary}
             rideId={orderPlacedRide.rideId}
             status={orderPlacedRide.status}
             onTrackRide={() => router.push('/(main)/passenger-tracking')}
-            onClose={handleDismissOrderPlaced}
           />
-        ) : currentRide ? (
+        </View>
+      ) : currentRide ? (
+        <View style={styles.formContainer}>
           <CurrentRideCard
             currentRide={currentRide}
             onRefreshRideStatus={handleGetCurrentRide}
             onTrackRide={() => router.push('/(main)/passenger-tracking')}
           />
-        ) : (
-          <RideDetailsCard
-            pickupLocation={pickupLocation}
-            setPickupLocation={handlePickupTextChange}
-            destination={destination}
-            setDestination={handleDestinationTextChange}
-            pickupSuggestions={pickupSuggestions}
-            destinationSuggestions={destinationSuggestions}
-            pickupLoading={pickupLoading}
-            destinationLoading={destinationLoading}
-            onSelectPickupSuggestion={(item) =>
-              handleSelectPlace(item, 'pickup')
-            }
-            onSelectDestinationSuggestion={(item) =>
-              handleSelectPlace(item, 'destination')
-            }
-            passengerCount={passengerCount}
-            setPassengerCount={setPassengerCount}
-            luggageCount={luggageCount}
-            setLuggageCount={setLuggageCount}
-            rideType={rideType}
-            setRideType={setRideType}
-            scheduledTime={scheduledTime}
-            setScheduledTime={setScheduledTime}
-            isShared={isShared}
-            setIsShared={setIsShared}
-            onReviewRide={handleReviewRide}
-          />
-        )}
-      </View>
+        </View>
+      ) : (
+        <KeyboardAvoidingView
+          style={styles.floatingFormContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 12}
+        >
+          <View style={styles.floatingFormCard}>
+            <TouchableOpacity
+              style={styles.floatingFormHeader}
+              activeOpacity={0.9}
+              onPress={() => setIsRideFormExpanded((value) => !value)}
+            >
+              <View style={styles.floatingHandle} />
+              <View style={styles.floatingHeaderRow}>
+                <View>
+                  <Text style={styles.floatingFormTitle}>Ride Details</Text>
+                  <Text style={styles.floatingFormSubtitle}>
+                    {pickupLocation || destination
+                      ? 'Your draft is saved here. Tap to continue editing.'
+                      : 'Tap to enter your pickup, destination, and trip details.'}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons
+                  name={isRideFormExpanded ? 'chevron-down' : 'chevron-up'}
+                  size={24}
+                  color="#111827"
+                />
+              </View>
+            </TouchableOpacity>
+
+            {isRideFormExpanded ? (
+              <ScrollView
+                style={styles.floatingFormScroll}
+                contentContainerStyle={styles.floatingFormScrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <RideDetailsCard
+                  pickupLocation={pickupLocation}
+                  setPickupLocation={handlePickupTextChange}
+                  destination={destination}
+                  setDestination={handleDestinationTextChange}
+                  pickupSuggestions={pickupSuggestions}
+                  destinationSuggestions={destinationSuggestions}
+                  pickupLoading={pickupLoading}
+                  destinationLoading={destinationLoading}
+                  onSelectPickupSuggestion={(item) => handleSelectPlace(item, 'pickup')}
+                  onSelectDestinationSuggestion={(item) =>
+                    handleSelectPlace(item, 'destination')
+                  }
+                  passengerCount={passengerCount}
+                  setPassengerCount={setPassengerCount}
+                  luggageCount={luggageCount}
+                  setLuggageCount={setLuggageCount}
+                  rideType={rideType}
+                  setRideType={setRideType}
+                  scheduledTime={scheduledTime}
+                  setScheduledTime={setScheduledTime}
+                  isShared={isShared}
+                  setIsShared={setIsShared}
+                  onReviewRide={handleReviewRide}
+                />
+              </ScrollView>
+            ) : (
+              <View style={styles.collapsedFormSummary}>
+                <Text style={styles.collapsedFormText}>
+                  {pickupLocation || destination
+                    ? `${pickupLocation || 'Pickup'} -> ${destination || 'Destination'}`
+                    : 'Your ride form is collapsed. Tap above to continue.'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      )}
 
       {pendingFeedbackRide && (
         <FeedbackCard
@@ -164,18 +225,14 @@ export default function PassengerScreen() {
         />
       )}
 
-            {isSearchingDriver && (
+      {isSearchingDriver && (
         <View style={styles.searchingBox}>
-          <ActivityIndicator size="large" color="#2563eb" />
-          <Text style={styles.searchingText}>
-            Looking for a driver for you...
-          </Text>
+          <ActivityIndicator size="large" color="#111827" />
+          <Text style={styles.searchingText}>Looking for a driver for you...</Text>
         </View>
       )}
 
-      {message ? (
-        <Text style={styles.message}>{message}</Text>
-      ) : null}
+      {message ? <Text style={styles.message}>{message}</Text> : null}
 
       {shouldShowBottomSheet && (
         <PassengerBottomSheet
@@ -183,6 +240,7 @@ export default function PassengerScreen() {
           rideType={rideType}
           pickupCoords={pickupCoords}
           destinationCoords={destinationCoords}
+          onBack={handleCloseReviewRide}
           onOrderNow={handleCreateRide}
         />
       )}
