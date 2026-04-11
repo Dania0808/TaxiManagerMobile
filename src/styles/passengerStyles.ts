@@ -571,6 +571,14 @@ export const passengerStyles = StyleSheet.create({
     fontSize: 16,
   },
 
+  primaryButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  secondaryButtonDisabled: {
+    opacity: 0.6,
+  },
+
   statusBanner: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -664,6 +672,51 @@ export const passengerStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
+  },
+
+  searchingHelperText: {
+    marginTop: 8,
+    color: '#6b7280',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+
+  globalBanner: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 18,
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+
+  infoBanner: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+  },
+
+  successBanner: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+
+  globalBannerTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+
+  globalBannerText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#111827',
+    fontWeight: '600',
   },
 
   orderPlacedCard: {

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import axios from 'axios/dist/browser/axios.cjs';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const BASE_URL = 'http://10.0.0.11:5213/api';
 
@@ -9,7 +10,7 @@ const api = axios.create({
 
 // 🔐 Attach JWT token to every request
 api.interceptors.request.use(
-  async (config) => {
+  async (config: InternalAxiosRequestConfig) => {
     try {
       const token = await AsyncStorage.getItem('token');
 
@@ -22,7 +23,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );

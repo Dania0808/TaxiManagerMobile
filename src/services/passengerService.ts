@@ -50,15 +50,16 @@ export async function submitPassengerRideFeedback(payload: {
 }
 
 export async function updatePassengerLiveLocation(payload: {
-  rideId: number;
   passengerId: number;
   latitude: number;
   longitude: number;
-  heading?: number | null;
-  speed?: number | null;
-  accuracy?: number | null;
 }) {
-  const response = await api.post('/RideTracking/passenger-location', payload);
+  const response = await api.post('/RideTracking/location', {
+    actorId: payload.passengerId,
+    actorType: 'Passenger',
+    latitude: payload.latitude,
+    longitude: payload.longitude,
+  });
   return response.data;
 }
 
@@ -76,5 +77,37 @@ export async function getPassengerProfile(passengerId: number) {
 
 export async function getPassengerRideHistory(passengerId: number) {
   const response = await api.get(`/Rides/history/${passengerId}`);
+  return response.data;
+}
+
+export async function updatePassengerProfile(
+  passengerId: number,
+  payload: {
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+  }
+) {
+  const response = await api.put(`/Passengers/${passengerId}`, payload);
+  return response.data;
+}
+
+export async function uploadPassengerProfileImage(
+  passengerId: number,
+  imageFile: {
+    uri: string;
+    name: string;
+    type: string;
+  }
+) {
+  const formData = new FormData();
+  formData.append('file', imageFile as any);
+
+  const response = await api.post(`/Passengers/${passengerId}/profile-image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
   return response.data;
 }

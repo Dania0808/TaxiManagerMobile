@@ -14,28 +14,32 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import AppNavbar from '../../src/components/AppNavbar';
 import {
-  getPassengerProfile,
-  getPassengerRideHistory,
-  updatePassengerProfile,
-  uploadPassengerProfileImage,
-} from '../../src/services/passengerService';
+  getDriverProfile,
+  getDriverRideHistory,
+  updateDriverProfile,
+  uploadDriverProfileImage,
+} from '../../src/services/driverService';
 import {
-  PassengerProfileType,
-  PassengerRideHistoryItemType,
-  StoredUser,
-} from '../../src/types/passenger';
+  DriverProfileType,
+  DriverRideHistoryItemType,
+  DriverStoredUser,
+} from '../../src/types/driver';
 
-export default function PassengerProfileScreen() {
+export default function DriverProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
-  const [user, setUser] = useState<StoredUser | null>(null);
-  const [profile, setProfile] = useState<PassengerProfileType | null>(null);
-  const [rideHistory, setRideHistory] = useState<PassengerRideHistoryItemType[]>([]);
+  const [user, setUser] = useState<DriverStoredUser | null>(null);
+  const [profile, setProfile] = useState<DriverProfileType | null>(null);
+  const [rideHistory, setRideHistory] = useState<DriverRideHistoryItemType[]>([]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [vehiclePlateNumber, setVehiclePlateNumber] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
 
   useEffect(() => {
@@ -49,33 +53,38 @@ export default function PassengerProfileScreen() {
           return;
         }
 
-        const parsedUser: StoredUser = JSON.parse(storedUser);
+        const parsedUser: DriverStoredUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        const profileImageStorageKey = parsedUser.passengerId
-          ? `passenger_profile_image_url_${parsedUser.passengerId}`
+        const profileImageStorageKey = parsedUser.driverId
+          ? `driver_profile_image_url_${parsedUser.driverId}`
           : undefined;
 
         const savedProfileImage = profileImageStorageKey
           ? await AsyncStorage.getItem(profileImageStorageKey)
           : '';
 
-        if (!parsedUser.passengerId) {
-          setProfile({
+        if (!parsedUser.driverId) {
+          const localProfile = {
             fullName: parsedUser.fullName,
             email: parsedUser.email,
             phoneNumber: parsedUser.phoneNumber || '',
             profileImageUrl: savedProfileImage || '',
-          });
-          setPhoneNumber(parsedUser.phoneNumber || '');
-          setProfileImageUrl(savedProfileImage || '');
+          };
+          setProfile(localProfile);
+          setPhoneNumber(localProfile.phoneNumber || '');
+          setProfileImageUrl(localProfile.profileImageUrl || '');
           return;
         }
 
         try {
-          const remoteProfile = await getPassengerProfile(parsedUser.passengerId);
+          const remoteProfile = await getDriverProfile(parsedUser.driverId);
           setProfile(remoteProfile);
-          setPhoneNumber(remoteProfile?.phoneNumber || '');
+          setPhoneNumber(remoteProfile?.phoneNumber || parsedUser.phoneNumber || '');
+          setCarModel(remoteProfile?.carModel || '');
+          setLicenseNumber(remoteProfile?.licenseNumber || '');
+          setVehiclePlateNumber(remoteProfile?.vehiclePlateNumber || '');
+
           if (remoteProfile?.profileImageUrl) {
             setProfileImageUrl(remoteProfile.profileImageUrl);
             if (profileImageStorageKey) {
@@ -89,10 +98,13 @@ export default function PassengerProfileScreen() {
           }
         } catch {
           setProfile({
-            passengerId: parsedUser.passengerId,
+            driverId: parsedUser.driverId,
             fullName: parsedUser.fullName,
             email: parsedUser.email,
             phoneNumber: parsedUser.phoneNumber || '',
+            carModel: '',
+            licenseNumber: '',
+            vehiclePlateNumber: '',
             profileImageUrl: savedProfileImage || '',
           });
           setPhoneNumber(parsedUser.phoneNumber || '');
@@ -100,7 +112,7 @@ export default function PassengerProfileScreen() {
         }
 
         try {
-          const history = await getPassengerRideHistory(parsedUser.passengerId);
+          const history = await getDriverRideHistory(parsedUser.driverId);
           setRideHistory(Array.isArray(history) ? history : []);
         } catch {
           setRideHistory([]);
@@ -113,53 +125,90 @@ export default function PassengerProfileScreen() {
     loadProfile();
   }, []);
 
-  const passengerId = user?.passengerId;
-  const profileImageStorageKey = passengerId
-    ? `passenger_profile_image_url_${passengerId}`
+  const driverId = user?.driverId;
+  const profileImageStorageKey = driverId
+    ? `driver_profile_image_url_${driverId}`
     : undefined;
 
+  const persistUserPhoneNumber = async (nextPhoneNumber: string) => {
+    const storedUser = await AsyncStorage.getItem('user');
+    if (!storedUser) return;
+
+    const parsedUser: DriverStoredUser = JSON.parse(storedUser);
+    const nextUser = {
+      ...parsedUser,
+      phoneNumber: nextPhoneNumber,
+    };
+
+    await AsyncStorage.setItem('user', JSON.stringify(nextUser));
+    setUser(nextUser);
+  };
+
   const refreshProfile = async () => {
-    if (!passengerId) return;
-    const remoteProfile = await getPassengerProfile(passengerId);
+    if (!driverId) return;
+    const remoteProfile = await getDriverProfile(driverId);
     setProfile(remoteProfile);
     setPhoneNumber(remoteProfile?.phoneNumber || '');
+    setCarModel(remoteProfile?.carModel || '');
+    setLicenseNumber(remoteProfile?.licenseNumber || '');
+    setVehiclePlateNumber(remoteProfile?.vehiclePlateNumber || '');
+
     if (remoteProfile?.profileImageUrl) {
       setProfileImageUrl(remoteProfile.profileImageUrl);
       if (profileImageStorageKey) {
-        await AsyncStorage.setItem(
-          profileImageStorageKey,
-          remoteProfile.profileImageUrl
-        );
+        await AsyncStorage.setItem(profileImageStorageKey, remoteProfile.profileImageUrl);
       }
     }
   };
 
   const handleSaveProfile = async () => {
-    if (!passengerId) {
-      Alert.alert('Profile', 'Passenger profile is not available.');
+    if (!driverId) {
+      await persistUserPhoneNumber(phoneNumber);
+      setProfile((currentProfile) => ({
+        ...currentProfile,
+        phoneNumber,
+        carModel,
+        licenseNumber,
+        vehiclePlateNumber,
+      }));
+      Alert.alert('Profile', 'Driver profile saved locally.');
       return;
     }
 
     try {
       setSaving(true);
-      await updatePassengerProfile(passengerId, {
-        fullName: profile?.fullName || user?.fullName || '',
-        email: profile?.email || user?.email || '',
+      await updateDriverProfile(driverId, {
         phoneNumber,
+        carModel,
+        licenseNumber,
+        vehiclePlateNumber,
       });
 
+      await persistUserPhoneNumber(phoneNumber);
       await refreshProfile();
-      Alert.alert('Profile', 'Profile updated successfully.');
+      Alert.alert('Profile', 'Driver profile updated successfully.');
     } catch (error: any) {
-      Alert.alert('Profile', error?.response?.data || 'Failed to save profile.');
+      await persistUserPhoneNumber(phoneNumber);
+      setProfile((currentProfile) => ({
+        ...currentProfile,
+        phoneNumber,
+        carModel,
+        licenseNumber,
+        vehiclePlateNumber,
+      }));
+      Alert.alert(
+        'Profile',
+        error?.response?.data ||
+          'Failed to update driver profile.'
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const handlePickImage = async (source: 'camera' | 'library') => {
-    if (!passengerId) {
-      Alert.alert('Profile', 'Passenger profile is not available.');
+    if (!driverId && !profileImageStorageKey) {
+      Alert.alert('Profile', 'Driver profile is not available.');
       return;
     }
 
@@ -198,33 +247,49 @@ export default function PassengerProfileScreen() {
 
       const asset = result.assets[0];
       const uri = asset.uri;
-      const fileName = asset.fileName || `passenger-profile-${Date.now()}.jpg`;
+      const fileName = asset.fileName || `driver-profile-${Date.now()}.jpg`;
       const fileType = asset.mimeType || 'image/jpeg';
 
       setUploadingImage(true);
-      const uploadResponse = await uploadPassengerProfileImage(passengerId, {
-        uri,
-        name: fileName,
-        type: fileType,
-      });
 
-      const nextUrl =
-        uploadResponse?.profileImageUrl ||
-        uploadResponse?.imageUrl ||
-        uploadResponse?.url ||
-        uri;
-
-      setProfileImageUrl(nextUrl);
-      if (profileImageStorageKey) {
-        await AsyncStorage.setItem(profileImageStorageKey, nextUrl);
+      if (!driverId) {
+        setProfileImageUrl(uri);
+        if (profileImageStorageKey) {
+          await AsyncStorage.setItem(profileImageStorageKey, uri);
+        }
+        Alert.alert('Profile', 'Profile photo saved locally.');
+        return;
       }
-      await refreshProfile();
-      Alert.alert('Profile', 'Profile photo updated successfully.');
-    } catch (error: any) {
-      Alert.alert(
-        'Profile Photo',
-        error?.response?.data || error?.message || 'Failed to upload profile photo.'
-      );
+
+      try {
+        const uploadResponse = await uploadDriverProfileImage(driverId, {
+          uri,
+          name: fileName,
+          type: fileType,
+        });
+
+        const nextUrl =
+          uploadResponse?.profileImageUrl ||
+          uploadResponse?.imageUrl ||
+          uploadResponse?.url ||
+          uri;
+
+        setProfileImageUrl(nextUrl);
+        if (profileImageStorageKey) {
+          await AsyncStorage.setItem(profileImageStorageKey, nextUrl);
+        }
+        await refreshProfile();
+        Alert.alert('Profile', 'Profile photo updated successfully.');
+      } catch (error: any) {
+        setProfileImageUrl(uri);
+        if (profileImageStorageKey) {
+          await AsyncStorage.setItem(profileImageStorageKey, uri);
+        }
+        Alert.alert(
+          'Profile Photo',
+          error?.response?.data || error?.message || 'Failed to upload profile photo.'
+        );
+      }
     } finally {
       setUploadingImage(false);
     }
@@ -250,15 +315,16 @@ export default function PassengerProfileScreen() {
     <View style={styles.screen}>
       <AppNavbar
         fullName={user?.fullName}
-        profileRoute="/(main)/passenger-profile"
+        profileRoute="/(main)/driver-profile"
         profileImageStorageKey={profileImageStorageKey}
+        subtitle="Driver profile"
       />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>
           <Image source={{ uri: avatarUri }} style={styles.avatar} />
-          <Text style={styles.name}>{profile?.fullName || user?.fullName || 'Passenger'}</Text>
-          <Text style={styles.role}>Passenger Profile</Text>
+          <Text style={styles.name}>{profile?.fullName || user?.fullName || 'Driver'}</Text>
+          <Text style={styles.role}>Driver Profile</Text>
 
           <View style={styles.imageActionsRow}>
             <TouchableOpacity
@@ -286,7 +352,7 @@ export default function PassengerProfileScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Personal Details</Text>
+          <Text style={styles.cardTitle}>Driver Details</Text>
 
           <View style={styles.detailRow}>
             <MaterialCommunityIcons name="email-outline" size={18} color="#4b5563" />
@@ -298,11 +364,45 @@ export default function PassengerProfileScreen() {
             <Text style={styles.detailText}>{phoneNumber || 'Phone number not added yet'}</Text>
           </View>
 
+          <View style={styles.detailRow}>
+            <MaterialCommunityIcons name="identifier" size={18} color="#4b5563" />
+            <Text style={styles.detailText}>
+              Driver ID: {driverId || profile?.driverId || 'Unavailable'}
+            </Text>
+          </View>
+
           <Text style={styles.inputLabel}>Phone Number</Text>
           <TextInput
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             placeholder="Add phone number"
+            placeholderTextColor="#9ca3af"
+            style={styles.input}
+          />
+
+          <Text style={styles.inputLabel}>Car Model</Text>
+          <TextInput
+            value={carModel}
+            onChangeText={setCarModel}
+            placeholder="Add car model"
+            placeholderTextColor="#9ca3af"
+            style={styles.input}
+          />
+
+          <Text style={styles.inputLabel}>License Number</Text>
+          <TextInput
+            value={licenseNumber}
+            onChangeText={setLicenseNumber}
+            placeholder="Add license number"
+            placeholderTextColor="#9ca3af"
+            style={styles.input}
+          />
+
+          <Text style={styles.inputLabel}>Vehicle Plate Number</Text>
+          <TextInput
+            value={vehiclePlateNumber}
+            onChangeText={setVehiclePlateNumber}
+            placeholder="Add plate number"
             placeholderTextColor="#9ca3af"
             style={styles.input}
           />
@@ -319,10 +419,12 @@ export default function PassengerProfileScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Ride History</Text>
+          <Text style={styles.cardTitle}>Completed Rides</Text>
 
           {rideHistory.length === 0 ? (
-            <Text style={styles.helperText}>No completed rides are available yet.</Text>
+            <Text style={styles.helperText}>
+              Driver ride history is not available yet or there are no completed rides.
+            </Text>
           ) : (
             rideHistory.map((ride) => (
               <View key={ride.id} style={styles.historyItem}>

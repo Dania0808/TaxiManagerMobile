@@ -52,8 +52,12 @@ export default function PassengerScreen() {
     wasVehicleClean,
     luggageHandlingRating,
     comment,
+    passengerRidePhase,
     shouldShowBottomSheet,
     isSearchingDriver,
+    isCreatingRide,
+    isRefreshingRide,
+    isSubmittingFeedback,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -90,11 +94,21 @@ export default function PassengerScreen() {
     );
   }
 
+  const profileImageStorageKey = user?.passengerId
+    ? `passenger_profile_image_url_${user.passengerId}`
+    : undefined;
+  const shouldShowCurrentRideCard =
+    !!currentRide && currentRide.status !== 'Pending' && currentRide.status !== 'Completed';
+  const shouldShowOrderPlacedCard =
+    (!!orderPlacedRide || currentRide?.status === 'Pending') && !shouldShowCurrentRideCard;
+
   return (
     <View style={styles.screen}>
       <AppNavbar
         fullName={user?.fullName}
         profileRoute="/(main)/passenger-profile"
+        coinBalance={coinBalance}
+        profileImageStorageKey={profileImageStorageKey}
       />
 
       <View style={styles.mapContainer}>
@@ -106,19 +120,15 @@ export default function PassengerScreen() {
           destination={destination}
           currentRide={currentRide}
         />
-
-        <View style={styles.coinsOverlay}>
-          <MaterialCommunityIcons name="cash-multiple" size={18} color="#111827" />
-          <Text style={styles.coinsText}>{coinBalance} shekels</Text>
-        </View>
       </View>
 
-      {orderPlacedRide ? (
+      {shouldShowOrderPlacedCard ? (
         <View style={styles.formContainer}>
           <OrderPlacedCard
-            rideSummary={orderPlacedRide.rideSummary}
-            rideId={orderPlacedRide.rideId}
-            status={orderPlacedRide.status}
+            rideSummary={orderPlacedRide?.rideSummary || rideSummary}
+            rideId={orderPlacedRide?.rideId || currentRide?.id}
+            status={orderPlacedRide?.status || currentRide?.status}
+            onRefreshRideStatus={handleGetCurrentRide}
             onTrackRide={() => router.push('/(main)/passenger-tracking')}
           />
         </View>
@@ -127,8 +137,25 @@ export default function PassengerScreen() {
           <CurrentRideCard
             currentRide={currentRide}
             onRefreshRideStatus={handleGetCurrentRide}
+            isRefreshing={isRefreshingRide}
             onTrackRide={() => router.push('/(main)/passenger-tracking')}
           />
+
+          {currentRide.status === 'Completed' ? (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Trip Completed</Text>
+              <Text style={styles.helperText}>
+                Thanks for riding with Taxi Manager. If your ride is waiting for feedback,
+                you can rate it below and earn coins for future trips.
+              </Text>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleGetCurrentRide}
+              >
+                <Text style={styles.secondaryButtonText}>Refresh Ride Summary</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
       ) : (
         <KeyboardAvoidingView
@@ -222,17 +249,43 @@ export default function PassengerScreen() {
           comment={comment}
           setComment={setComment}
           onSubmitFeedback={handleSubmitFeedback}
+          isSubmitting={isSubmittingFeedback}
         />
       )}
 
       {isSearchingDriver && (
         <View style={styles.searchingBox}>
           <ActivityIndicator size="large" color="#111827" />
-          <Text style={styles.searchingText}>Looking for a driver for you...</Text>
+          <Text style={styles.searchingText}>
+            {isCreatingRide ? 'Sending your ride request...' : 'Looking for a driver for you...'}
+          </Text>
+          <Text style={styles.searchingHelperText}>
+            {isCreatingRide
+              ? 'We are creating your trip and preparing the live status updates.'
+              : 'We will automatically update this screen once a driver accepts.'}
+          </Text>
         </View>
       )}
 
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? (
+        <View
+          style={[
+            styles.globalBanner,
+            passengerRidePhase === 'planning'
+              ? styles.infoBanner
+              : styles.successBanner,
+          ]}
+        >
+          <Text style={styles.globalBannerTitle}>
+            {passengerRidePhase === 'planning'
+              ? 'Update'
+              : passengerRidePhase === 'searching' || passengerRidePhase === 'waiting_match'
+                ? 'Ride Status'
+                : 'Latest Update'}
+          </Text>
+          <Text style={styles.globalBannerText}>{message}</Text>
+        </View>
+      ) : null}
 
       {shouldShowBottomSheet && (
         <PassengerBottomSheet
@@ -242,6 +295,7 @@ export default function PassengerScreen() {
           destinationCoords={destinationCoords}
           onBack={handleCloseReviewRide}
           onOrderNow={handleCreateRide}
+          isSubmitting={isCreatingRide}
         />
       )}
     </View>

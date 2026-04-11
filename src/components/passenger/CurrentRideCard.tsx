@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Button, Image, Text, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { CurrentRideType } from '../../types/passenger';
 
@@ -7,13 +7,64 @@ type CurrentRideCardProps = {
   currentRide: CurrentRideType | null;
   onRefreshRideStatus: () => void;
   onTrackRide?: () => void;
+  isRefreshing?: boolean;
 };
+
+function getPassengerRideCopy(status?: string) {
+  if (status === 'Pending') {
+    return {
+      title: 'Searching for a driver',
+      subtitle:
+        'We are still matching your trip. You will see driver details here as soon as someone accepts.',
+    };
+  }
+
+  if (status === 'Accepted') {
+    return {
+      title: 'Driver assigned',
+      subtitle:
+        'A driver accepted your ride. Review their details below and open tracking for live updates.',
+    };
+  }
+
+  if (status === 'OnTheWay') {
+    return {
+      title: 'Driver on the way',
+      subtitle:
+        'Your driver is heading to the pickup point now. Keep your phone nearby in case they need help finding you.',
+    };
+  }
+
+  if (status === 'PickedUp') {
+    return {
+      title: 'Ride in progress',
+      subtitle:
+        'You are currently on the trip. Tracking stays available until you reach the destination.',
+    };
+  }
+
+  if (status === 'Completed') {
+    return {
+      title: 'Ride completed',
+      subtitle:
+        'This trip is finished. If feedback is requested, you can rate the ride below on the main screen.',
+    };
+  }
+
+  return {
+    title: 'Current ride',
+    subtitle: 'Your latest ride details are shown below.',
+  };
+}
 
 export default function CurrentRideCard({
   currentRide,
   onRefreshRideStatus,
   onTrackRide,
+  isRefreshing = false,
 }: CurrentRideCardProps) {
+  const rideCopy = getPassengerRideCopy(currentRide?.status);
+
   return (
     <View style={styles.card}>
       <View style={styles.cardTitleRow}>
@@ -26,13 +77,8 @@ export default function CurrentRideCard({
       {currentRide ? (
         <>
           <View style={styles.statusBanner}>
-            <Text style={styles.statusTitle}>
-              {currentRide.status === 'Pending' && 'Looking for a driver for you...'}
-              {currentRide.status === 'Accepted' && 'A driver accepted your ride.'}
-              {currentRide.status === 'OnTheWay' && 'Driver is on the way.'}
-              {currentRide.status === 'PickedUp' && 'You are currently on the ride.'}
-              {currentRide.status === 'Completed' && 'Ride completed.'}
-            </Text>
+            <Text style={styles.statusTitle}>{rideCopy.title}</Text>
+            <Text style={styles.helperText}>{rideCopy.subtitle}</Text>
 
             <Text style={styles.helperText}>
               Status: {currentRide.status || 'Unknown'}
@@ -92,12 +138,25 @@ export default function CurrentRideCard({
           </View>
 
           <View style={styles.orderButtonWrap}>
-            <Button title="Refresh Ride Status" onPress={onRefreshRideStatus} />
+            <TouchableOpacity
+              style={[
+                styles.secondaryButton,
+                isRefreshing && styles.secondaryButtonDisabled,
+              ]}
+              onPress={onRefreshRideStatus}
+              disabled={isRefreshing}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {isRefreshing ? 'Refreshing...' : 'Refresh Ride Status'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {currentRide.driverId && currentRide.status !== 'Completed' && onTrackRide ? (
             <View style={styles.orderButtonWrap}>
-              <Button title="Track Driver" onPress={onTrackRide} />
+              <TouchableOpacity style={styles.primaryButton} onPress={onTrackRide}>
+                <Text style={styles.primaryButtonText}>Track Driver</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
         </>

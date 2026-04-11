@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import * as Location from 'expo-location';
 import { LatLng } from '../types/passenger';
 
 type NativeGeolocationCoordinates = {
@@ -31,45 +32,70 @@ export function useLiveLocation({
   const lastSentAtRef = useRef(0);
 
   useEffect(() => {
-    if (!enabled) return;
-
-    const geolocation = globalThis.navigator?.geolocation;
-
-    if (!geolocation) {
-      setLocationError('Geolocation is not available on this device.');
+    if (!enabled) {
+      setLocationError('');
       return;
     }
 
-    const watchId = geolocation.watchPosition(
-      async (position) => {
-        const now = Date.now();
-        const coords = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
+    let isMounted = true;
+    let subscription: Location.LocationSubscription | null = null;
 
-        setCurrentCoords(coords);
-        setLocationError('');
+    const startWatching = async () => {
+      const permission = await Location.requestForegroundPermissionsAsync();
 
-        if (now - lastSentAtRef.current < intervalMs) {
-          return;
-        }
+      if (!isMounted) return;
 
-        lastSentAtRef.current = now;
-        await onLocation(position as NativeGeolocationPosition);
-      },
-      (error) => {
-        setLocationError(error.message || 'Failed to get live location.');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 3000,
+      if (permission.status !== 'granted') {
+        setLocationError('Location permission was not granted.');
+        return;
       }
-    );
+
+      try {
+        subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: distanceFilter,
+            timeInterval: intervalMs,
+          },
+          async (position) => {
+            if (!isMounted) return;
+
+            const now = Date.now();
+            const coords = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+
+            setCurrentCoords(coords);
+            setLocationError('');
+
+            if (now - lastSentAtRef.current < intervalMs) {
+              return;
+            }
+
+            lastSentAtRef.current = now;
+            await onLocation({
+              coords: {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                heading: position.coords.heading ?? null,
+                speed: position.coords.speed ?? null,
+                accuracy: position.coords.accuracy ?? null,
+              },
+            });
+          }
+        );
+      } catch (error: any) {
+        if (!isMounted) return;
+        setLocationError(error?.message || 'Failed to get live location.');
+      }
+    };
+
+    startWatching();
 
     return () => {
-      geolocation.clearWatch(watchId);
+      isMounted = false;
+      subscription?.remove();
     };
   }, [distanceFilter, enabled, intervalMs, onLocation]);
 

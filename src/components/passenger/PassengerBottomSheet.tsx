@@ -10,6 +10,7 @@ type PassengerBottomSheetProps = {
   destinationCoords?: LatLng | null;
   onBack: () => void;
   onOrderNow: () => void;
+  isSubmitting?: boolean;
 };
 
 export default function PassengerBottomSheet({
@@ -19,6 +20,7 @@ export default function PassengerBottomSheet({
   destinationCoords,
   onBack,
   onOrderNow,
+  isSubmitting = false,
 }: PassengerBottomSheetProps) {
   const hasRoute = !!pickupCoords && !!destinationCoords;
 
@@ -119,8 +121,17 @@ export default function PassengerBottomSheet({
           </View>
 
           <View style={styles.bottomButtonWrap}>
-            <TouchableOpacity style={styles.primaryButton} onPress={onOrderNow}>
-              <Text style={styles.primaryButtonText}>Order Now</Text>
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                isSubmitting && styles.primaryButtonDisabled,
+              ]}
+              onPress={onOrderNow}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.primaryButtonText}>
+                {isSubmitting ? 'Sending request...' : 'Order Now'}
+              </Text>
             </TouchableOpacity>
           </View>
 

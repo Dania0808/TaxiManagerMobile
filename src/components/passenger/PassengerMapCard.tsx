@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { CurrentRideType, LatLng } from '../../types/passenger';
@@ -54,15 +55,30 @@ export default function PassengerMapCard({
           />
         )}
 
-        {currentRide?.driverId && pickupCoords && (
-          <Marker
-            coordinate={pickupCoords}
-            title="Driver heading to pickup"
-            description="Live driver location will connect here next phase"
-            pinColor="blue"
-          />
-        )}
       </MapView>
+
+      <View style={styles.mapOverlayInfo}>
+        <View style={styles.mapOverlayHeader}>
+          <View style={styles.mapOverlayIconWrap}>
+            <MaterialCommunityIcons
+              name={currentRide?.driverId ? 'car-connected' : 'map-marker-path'}
+              size={18}
+              color="#111827"
+            />
+          </View>
+          <Text style={styles.mapOverlayTitle}>
+            {currentRide?.driverId ? 'Ride in progress' : 'Plan your route'}
+          </Text>
+        </View>
+
+        <Text style={styles.mapOverlaySubtitle}>
+          {currentRide?.driverId
+            ? 'We will show live tracking here when driver updates are available.'
+            : pickupCoords && destinationCoords
+              ? 'Your pickup and destination are pinned. Review the route before booking.'
+              : 'Choose your pickup and destination to preview the ride path.'}
+        </Text>
+      </View>
     </View>
   );
 }

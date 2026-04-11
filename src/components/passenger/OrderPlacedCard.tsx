@@ -8,6 +8,7 @@ type OrderPlacedCardProps = {
   rideId?: number;
   status?: string;
   onTrackRide: () => void;
+  onRefreshRideStatus?: () => void;
 };
 
 export default function OrderPlacedCard({
@@ -15,6 +16,7 @@ export default function OrderPlacedCard({
   rideId,
   status,
   onTrackRide,
+  onRefreshRideStatus,
 }: OrderPlacedCardProps) {
   return (
     <View style={styles.orderPlacedCard}>
@@ -24,8 +26,8 @@ export default function OrderPlacedCard({
 
       <Text style={styles.orderPlacedTitle}>Order Placed</Text>
       <Text style={styles.orderPlacedSubtitle}>
-        Your ride request was sent successfully. We are matching you with a
-        nearby driver now.
+        Your ride request was sent successfully. We are now matching you with a
+        nearby driver and will update this screen automatically.
       </Text>
 
       <View style={styles.orderPlacedBanner}>
@@ -35,7 +37,9 @@ export default function OrderPlacedCard({
             : 'Ride request created successfully'}
         </Text>
         <Text style={styles.helperText}>
-          {rideId ? `Ride #${rideId}` : 'Your ride details are saved below.'}
+          {rideId
+            ? `Ride #${rideId}. Keep this screen open while we look for the best match.`
+            : 'Your ride details are saved below.'}
         </Text>
       </View>
 
@@ -79,8 +83,14 @@ export default function OrderPlacedCard({
       </View>
 
       <View style={styles.orderPlacedActions}>
+        {onRefreshRideStatus ? (
+          <TouchableOpacity style={styles.secondaryButton} onPress={onRefreshRideStatus}>
+            <Text style={styles.secondaryButtonText}>Refresh Match Status</Text>
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity style={styles.primaryButton} onPress={onTrackRide}>
-          <Text style={styles.primaryButtonText}>Track My Ride</Text>
+          <Text style={styles.primaryButtonText}>Open Tracking</Text>
         </TouchableOpacity>
       </View>
     </View>

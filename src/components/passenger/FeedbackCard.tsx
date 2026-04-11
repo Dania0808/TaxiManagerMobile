@@ -1,4 +1,4 @@
-import { Button, Switch, Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { PendingFeedbackRideType } from '../../types/passenger';
 
@@ -17,6 +17,7 @@ type FeedbackCardProps = {
   comment: string;
   setComment: (value: string) => void;
   onSubmitFeedback: () => void;
+  isSubmitting?: boolean;
 };
 
 export default function FeedbackCard({
@@ -34,6 +35,7 @@ export default function FeedbackCard({
   comment,
   setComment,
   onSubmitFeedback,
+  isSubmitting = false,
 }: FeedbackCardProps) {
   if (!pendingFeedbackRide) return null;
 
@@ -94,10 +96,20 @@ export default function FeedbackCard({
       />
 
       <View style={styles.orderButtonWrap}>
-        <Button
-          title="Submit Feedback and Earn Coins"
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            isSubmitting && styles.primaryButtonDisabled,
+          ]}
           onPress={onSubmitFeedback}
-        />
+          disabled={isSubmitting}
+        >
+          <Text style={styles.primaryButtonText}>
+            {isSubmitting
+              ? 'Sending feedback...'
+              : 'Submit Feedback and Earn Coins'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -1,15 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type AppNavbarProps = {
   fullName?: string;
-  profileRoute?: '/(main)/passenger-profile' | string;
+  profileRoute?: Href;
+  coinBalance?: number;
+  profileImageStorageKey?: string;
+  subtitle?: string;
 };
 
-export default function AppNavbar({ fullName, profileRoute }: AppNavbarProps) {
+export default function AppNavbar({
+  fullName,
+  profileRoute,
+  coinBalance,
+  profileImageStorageKey,
+  subtitle = 'Passenger dashboard',
+}: AppNavbarProps) {
   const router = useRouter();
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+
+  useEffect(() => {
+    const loadProfileImage = async () => {
+      if (!profileImageStorageKey) {
+        setProfileImageUrl('');
+        return;
+      }
+
+      const savedImage = await AsyncStorage.getItem(profileImageStorageKey);
+      setProfileImageUrl(savedImage || '');
+    };
+
+    loadProfileImage();
+  }, [profileImageStorageKey]);
 
   const handleLogout = async () => {
     try {
@@ -34,13 +59,23 @@ export default function AppNavbar({ fullName, profileRoute }: AppNavbarProps) {
 
           <View style={styles.brandTextWrap}>
             <Text style={styles.title}>Taxi Manager</Text>
-            <Text style={styles.subtitle}>Passenger dashboard</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
         </View>
 
         <View style={styles.actionsRow}>
+          {typeof coinBalance === 'number' ? (
+            <View style={styles.coinsPill}>
+              <MaterialCommunityIcons name="cash-multiple" size={16} color="#111827" />
+              <View>
+                <Text style={styles.pillLabel}>Coins</Text>
+                <Text style={styles.pillValue}>{coinBalance}</Text>
+              </View>
+            </View>
+          ) : null}
+
           <TouchableOpacity
-            style={styles.userBadge}
+            style={styles.profileButton}
             activeOpacity={profileRoute ? 0.85 : 1}
             disabled={!profileRoute}
             onPress={() => {
@@ -49,20 +84,25 @@ export default function AppNavbar({ fullName, profileRoute }: AppNavbarProps) {
               }
             }}
           >
-            <View style={styles.avatarWrap}>
-              <MaterialCommunityIcons
-                name="account-outline"
-                size={16}
-                color="#111827"
-              />
-            </View>
+            {profileImageUrl ? (
+              <Image source={{ uri: profileImageUrl }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarWrap}>
+                <MaterialCommunityIcons
+                  name="account-outline"
+                  size={16}
+                  color="#111827"
+                />
+              </View>
+            )}
 
             <View style={styles.userMeta}>
-              <Text style={styles.userLabel}>Account</Text>
+              <Text style={styles.userLabel}>Profile</Text>
               <Text style={styles.userText} numberOfLines={1}>
                 {fullName || 'User'}
               </Text>
             </View>
+            <MaterialCommunityIcons name="chevron-right" size={18} color="#9ca3af" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -134,7 +174,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginLeft: 12,
   },
-  userBadge: {
+  coinsPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
@@ -143,7 +183,31 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 7,
     paddingHorizontal: 10,
-    maxWidth: 160,
+    gap: 8,
+  },
+  pillLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: '#9ca3af',
+    marginBottom: 1,
+  },
+  pillValue: {
+    color: '#111827',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    maxWidth: 176,
   },
   avatarWrap: {
     width: 28,
@@ -156,8 +220,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
   },
+  avatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+  },
   userMeta: {
     flexShrink: 1,
+    marginRight: 4,
   },
   userLabel: {
     fontSize: 10,

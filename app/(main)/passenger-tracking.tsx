@@ -13,6 +13,9 @@ export default function PassengerTrackingScreen() {
     currentRide,
     trackingSnapshot,
     trackingUnavailable,
+    isRefreshingRide,
+    isRefreshingTracking,
+    passengerRidePhase,
     handleGetCurrentRide,
     handleRefreshTrackingSnapshot,
   } = usePassengerScreen();
@@ -163,6 +166,9 @@ export default function PassengerTrackingScreen() {
             <Text style={styles.helperText}>
               Status: {currentRide?.status || 'Unknown'}
             </Text>
+            <Text style={styles.helperText}>
+              Stage: {passengerRidePhase.replace('_', ' ')}
+            </Text>
           </View>
 
           <View style={styles.rideDetailsBox}>
@@ -187,13 +193,15 @@ export default function PassengerTrackingScreen() {
 
           <View style={styles.orderButtonWrap}>
             <Text style={styles.linkButton} onPress={handleGetCurrentRide}>
-              Refresh ride status
+              {isRefreshingRide ? 'Refreshing ride status...' : 'Refresh ride status'}
             </Text>
           </View>
 
           <View style={styles.orderButtonWrap}>
             <Text style={styles.linkButton} onPress={handleRefreshTrackingSnapshot}>
-              Refresh live locations
+              {isRefreshingTracking
+                ? 'Refreshing live locations...'
+                : 'Refresh live locations'}
             </Text>
           </View>
         </View>
