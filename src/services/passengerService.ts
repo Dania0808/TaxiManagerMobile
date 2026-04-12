@@ -7,8 +7,16 @@ export async function getPassengerCoinBalance(passengerId: number) {
 }
 
 export async function getPassengerCurrentRide(passengerId: number) {
-  const response = await api.get(`/Rides/current/${passengerId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/Rides/current/${passengerId}`);
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 204 || error?.response?.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function getPassengerPendingFeedbackRide(passengerId: number) {

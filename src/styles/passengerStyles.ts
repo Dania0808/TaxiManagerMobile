@@ -37,11 +37,54 @@ export const passengerStyles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
   },
 
+  passengerScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 120,
+  },
+
+  mapSection: {
+    height: 280,
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginBottom: 16,
+    backgroundColor: '#e5e7eb',
+  },
+
+  sectionSpacing: {
+    marginBottom: 14,
+  },
+
+  backButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+
+  backButtonText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   formContainer: {
     flex: 1,
     marginTop: -76,
     paddingHorizontal: 16,
-    paddingBottom: 96,
+    paddingBottom: 120,
     backgroundColor: '#f3f4f6',
   },
 
@@ -51,7 +94,7 @@ export const passengerStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: 16,
-    paddingBottom: 48,
+    paddingBottom: 24,
   },
 
   floatingFormCard: {
@@ -64,7 +107,7 @@ export const passengerStyles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: -2 },
     elevation: 8,
-    maxHeight: '82%',
+    maxHeight: '78%',
     overflow: 'hidden',
   },
 
@@ -72,8 +115,28 @@ export const passengerStyles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 10,
     paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+  },
+
+  rideComposerContainer: {
+    marginBottom: 14,
+  },
+
+  rideComposerCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+
+  rideComposerTextWrap: {
+    flex: 1,
+    marginRight: 12,
   },
 
   floatingHandle: {
@@ -185,7 +248,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 10,
     marginTop: 6,
   },
@@ -359,8 +422,7 @@ export const passengerStyles = StyleSheet.create({
   mapHeroCard: {
     flex: 1,
     overflow: 'hidden',
-    borderBottomLeftRadius: 34,
-    borderBottomRightRadius: 34,
+    borderRadius: 28,
     backgroundColor: '#e5e7eb',
   },
 
@@ -451,7 +513,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   inlineInputs: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 10,
   },
 
@@ -479,7 +541,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   rideTypeButtons: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 10,
     marginBottom: 10,
   },
@@ -514,14 +576,15 @@ export const passengerStyles = StyleSheet.create({
   },
 
   sharedRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
 
   sharedTextWrap: {
-    flex: 1,
-    marginRight: 12,
+    width: '100%',
+    marginRight: 0,
+    marginBottom: 8,
   },
 
   sharedInfoBox: {
@@ -595,7 +658,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   driverCard: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 18,
@@ -608,7 +671,9 @@ export const passengerStyles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    marginRight: 12,
+    marginRight: 0,
+    marginBottom: 12,
+    alignSelf: 'center',
   },
 
   driverDetails: {
@@ -682,15 +747,14 @@ export const passengerStyles = StyleSheet.create({
     lineHeight: 19,
   },
 
-  globalBanner: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 18,
+  inlineBanner: {
     borderRadius: 18,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 6,
   },
 
   infoBanner: {
@@ -801,7 +865,7 @@ export const passengerStyles = StyleSheet.create({
 
   bottomSheet: {
     backgroundColor: '#ffffff',
-    padding: 18,
+    paddingTop: 14,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -810,28 +874,90 @@ export const passengerStyles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 0 },
-    flex: 1,
+    maxHeight: '92%',
+  },
+
+  bottomSheetHeader: {
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+
+  bottomSheetBackAction: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
+
+  bottomSheetBackActionText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  bottomSheetTitleWrap: {
+    paddingTop: 2,
+  },
+
+  bottomSheetSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+
+  bottomSheetScroll: {
+    flexGrow: 0,
   },
 
   bottomSheetContent: {
-    flex: 1,
-    justifyContent: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 18,
+    justifyContent: 'flex-start',
   },
 
   bottomTitle: {
     fontSize: 19,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 8,
     color: '#111827',
     textAlign: 'center',
   },
 
+  bottomSummaryBanner: {
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+
+  bottomSummaryTitle: {
+    color: '#1e3a8a',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+
+  bottomSummaryText: {
+    color: '#1f2937',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
   bottomSheetRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
     alignItems: 'flex-start',
     marginBottom: 8,
-    gap: 12,
+    gap: 4,
   },
 
   bottomLabel: {
@@ -841,13 +967,41 @@ export const passengerStyles = StyleSheet.create({
   },
 
   bottomValue: {
-    flex: 1,
-    textAlign: 'right',
+    width: '100%',
+    textAlign: 'left',
     color: '#111827',
   },
 
   bottomButtonWrap: {
     marginTop: 14,
+  },
+
+  bottomFooter: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 18,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    gap: 10,
+  },
+
+  bottomPrimaryAction: {
+    marginTop: 0,
+  },
+
+  bottomSecondaryAction: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+
+  bottomSecondaryActionText: {
+    color: '#1f2937',
+    fontWeight: '700',
+    fontSize: 15,
   },
 
   bottomBackHint: {
@@ -892,5 +1046,200 @@ export const passengerStyles = StyleSheet.create({
   linkButton: {
     color: '#111827',
     fontWeight: '700',
+  },
+
+  completionModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(17,24,39,0.36)',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+
+  completionModalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    maxHeight: '92%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 12,
+  },
+
+  completionModalHeader: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 10,
+  },
+
+  completionModalIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ecfdf5',
+    marginBottom: 14,
+  },
+
+  completionModalIcon: {
+    color: '#166534',
+    fontSize: 28,
+    fontWeight: '800',
+  },
+
+  completionModalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  completionModalSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#4b5563',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+
+  completionModalActionArea: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 10,
+  },
+
+  feedbackHeroCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 22,
+    alignItems: 'center',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+
+  feedbackHeroIconWrap: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fefce8',
+    marginBottom: 14,
+  },
+
+  feedbackHeroTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+  },
+
+  feedbackHeroSubtitle: {
+    color: '#4b5563',
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+
+  feedbackTripSummary: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: '#f9fafb',
+    marginBottom: 14,
+  },
+
+  feedbackTripRowLabel: {
+    color: '#6b7280',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+
+  feedbackTripRowValue: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  feedbackTripRowArrow: {
+    color: '#6b7280',
+    fontSize: 12,
+    fontWeight: '700',
+    marginVertical: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  feedbackSectionTitle: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '800',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+
+  feedbackChoiceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  feedbackChip: {
+    minWidth: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  feedbackChipActive: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
+  },
+
+  feedbackChipText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  feedbackChipTextActive: {
+    color: '#ffffff',
+  },
+
+  feedbackSwitchLabel: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 10,
+  },
+
+  feedbackCommentInput: {
+    minHeight: 110,
+    textAlignVertical: 'top',
+    paddingTop: 14,
   },
 });

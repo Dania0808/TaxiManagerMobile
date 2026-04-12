@@ -26,7 +26,7 @@ export const driverStyles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    padding: 24,
+    padding: 20,
     marginBottom: 14,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -35,15 +35,15 @@ export const driverStyles = StyleSheet.create({
     elevation: 5,
   },
   heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     gap: 12,
   },
   heroIdentityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    width: '100%',
   },
   heroIconWrap: {
     width: 64,
@@ -76,6 +76,9 @@ export const driverStyles = StyleSheet.create({
     lineHeight: 21,
   },
   availabilityWrap: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   availabilityLabel: {
@@ -112,6 +115,11 @@ export const driverStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
+  },
+  heroStatHint: {
+    marginTop: 4,
+    color: '#6b7280',
+    fontSize: 12,
   },
   helperText: {
     color: '#6b7280',
@@ -184,13 +192,12 @@ export const driverStyles = StyleSheet.create({
     lineHeight: 20,
   },
   tripInfoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 10,
     marginBottom: 12,
   },
   tripInfoBlock: {
-    width: '48%',
+    width: '100%',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 16,
@@ -227,7 +234,7 @@ export const driverStyles = StyleSheet.create({
   },
   map: {
     width: '100%',
-    height: 260,
+    height: 240,
     borderRadius: 14,
     marginBottom: 12,
   },
@@ -272,6 +279,11 @@ export const driverStyles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 6,
   },
+  urgentCountdown: {
+    color: '#b45309',
+    fontSize: 13,
+    fontWeight: '700',
+  },
   actionButton: {
     backgroundColor: '#111827',
     paddingVertical: 14,
@@ -283,6 +295,9 @@ export const driverStyles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
     fontSize: 15,
+  },
+  actionButtonDisabled: {
+    opacity: 0.6,
   },
   secondaryButton: {
     borderWidth: 1,
@@ -297,6 +312,9 @@ export const driverStyles = StyleSheet.create({
     color: '#1f2937',
     fontWeight: '700',
     fontSize: 15,
+  },
+  secondaryButtonDisabled: {
+    opacity: 0.6,
   },
   showMoreButton: {
     marginTop: 12,
@@ -351,5 +369,57 @@ export const driverStyles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     paddingHorizontal: 16,
+  },
+  globalBanner: {
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  infoBanner: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+  },
+  successBanner: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+  warningBanner: {
+    backgroundColor: '#fff7ed',
+    borderColor: '#fed7aa',
+  },
+  globalBannerTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  globalBannerText: {
+    color: '#111827',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+  },
+  dispatchModeCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    backgroundColor: '#f9fafb',
+    padding: 14,
+    marginTop: 12,
+  },
+  dispatchModeTitle: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  refreshMetaText: {
+    color: '#6b7280',
+    fontSize: 12,
+    marginTop: 2,
   },
 });

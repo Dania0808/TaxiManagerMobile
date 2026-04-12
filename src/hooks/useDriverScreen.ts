@@ -104,6 +104,13 @@ export function useDriverScreen() {
   const [message, setMessage] = useState('');
   const [isOnline, setIsOnline] = useState(false);
   const [timeTick, setTimeTick] = useState(Date.now());
+  const [isTogglingOnline, setIsTogglingOnline] = useState(false);
+  const [isRefreshingRequests, setIsRefreshingRequests] = useState(false);
+  const [isRefreshingRide, setIsRefreshingRide] = useState(false);
+  const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
+  const [activeOfferActionId, setActiveOfferActionId] = useState<number | null>(null);
+  const [activeClaimRideId, setActiveClaimRideId] = useState<number | null>(null);
+  const [isUpdatingRideStatus, setIsUpdatingRideStatus] = useState(false);
 
   const driverId = user?.driverId;
 
@@ -232,11 +239,14 @@ export function useDriverScreen() {
     }
 
     try {
+      setIsRefreshingRequests(true);
       const data = await getOpenRideRequests();
       setOpenRideRequests(Array.isArray(data) ? data : []);
     } catch (error: any) {
       console.log('OPEN REQUESTS ERROR:', error?.response?.data || error?.message);
       setMessage(error?.response?.data || 'Failed to load open requests.');
+    } finally {
+      setIsRefreshingRequests(false);
     }
   }, [isOnline]);
 
@@ -247,6 +257,7 @@ export function useDriverScreen() {
     }
 
     try {
+      setIsRefreshingRide(true);
       const data = await getDriverCurrentRide(driverId);
       setCurrentRide(data);
       setMessage('');
@@ -263,6 +274,8 @@ export function useDriverScreen() {
         );
         setMessage(error?.response?.data || 'Failed to load current ride.');
       }
+    } finally {
+      setIsRefreshingRide(false);
     }
   }, [driverId]);
 
@@ -275,6 +288,7 @@ export function useDriverScreen() {
     const nextOnlineState = !isOnline;
 
     try {
+      setIsTogglingOnline(true);
       await updateDriverAvailability({
         driverId,
         isOnline: nextOnlineState,
@@ -296,11 +310,14 @@ export function useDriverScreen() {
         'Availability',
         error?.response?.data || 'Failed to update driver availability.'
       );
+    } finally {
+      setIsTogglingOnline(false);
     }
   }, [driverId, isOnline]);
 
   const handleAcceptRide = async (offerId: number) => {
     try {
+      setActiveOfferActionId(offerId);
       const responseMessage = await acceptDriverOffer(offerId);
       setMessage(
         typeof responseMessage === 'string'
@@ -315,6 +332,8 @@ export function useDriverScreen() {
       const backendMessage = error?.response?.data || 'Failed to accept ride.';
       setMessage(backendMessage);
       Alert.alert('Accept Ride Failed', backendMessage);
+    } finally {
+      setActiveOfferActionId(null);
     }
   };
 
@@ -325,6 +344,7 @@ export function useDriverScreen() {
     }
 
     try {
+      setActiveClaimRideId(rideId);
       const responseMessage = await claimOpenRideRequest(rideId, driverId);
       setMessage(
         typeof responseMessage === 'string'
@@ -339,6 +359,8 @@ export function useDriverScreen() {
       const backendMessage = error?.response?.data || 'Failed to claim ride.';
       setMessage(backendMessage);
       Alert.alert('Claim Ride Failed', backendMessage);
+    } finally {
+      setActiveClaimRideId(null);
     }
   }, [driverId, handleGetCurrentOffer, handleGetCurrentRide, handleGetOpenRideRequests]);
 
@@ -346,6 +368,7 @@ export function useDriverScreen() {
     if (!incomingOffer?.offerId) return;
 
     try {
+      setActiveOfferActionId(incomingOffer.offerId);
       const responseMessage = await declineDriverOffer(incomingOffer.offerId);
       setIncomingOffer(null);
       setMessage(
@@ -359,6 +382,8 @@ export function useDriverScreen() {
       const backendMessage = error?.response?.data || 'Failed to decline ride.';
       setMessage(backendMessage);
       Alert.alert('Decline Ride Failed', backendMessage);
+    } finally {
+      setActiveOfferActionId(null);
     }
   }, [handleGetCurrentOffer, incomingOffer]);
 
@@ -371,6 +396,7 @@ export function useDriverScreen() {
     }
 
     try {
+      setIsUpdatingRideStatus(true);
       const responseMessage = await updateDriverRideStatus({
         rideId: currentRide.id,
         status: newStatus,
@@ -388,6 +414,8 @@ export function useDriverScreen() {
       const backendMessage = error?.response?.data || 'Failed to update ride status.';
       setMessage(backendMessage);
       Alert.alert('Update Failed', backendMessage);
+    } finally {
+      setIsUpdatingRideStatus(false);
     }
   };
 
@@ -395,6 +423,7 @@ export function useDriverScreen() {
     if (!currentRide?.id) return;
 
     try {
+      setIsRefreshingTracking(true);
       const data = await getDriverRideTracking(currentRide.id);
       setTrackingSnapshot(data);
       setTrackingUnavailable(false);
@@ -405,6 +434,8 @@ export function useDriverScreen() {
       }
 
       console.log('DRIVER TRACKING ERROR:', error?.response?.data || error?.message);
+    } finally {
+      setIsRefreshingTracking(false);
     }
   }, [currentRide?.id]);
 
@@ -554,6 +585,14 @@ export function useDriverScreen() {
     currentRide?.estimatedTripDurationMinutes ??
     incomingOffer?.estimatedTripDurationMinutes ??
     null;
+  const driverPhase = useMemo(() => {
+    if (!isOnline) return 'offline';
+    if (currentRide?.status === 'Completed') return 'completed';
+    if (currentRide?.status === 'PickedUp') return 'trip_in_progress';
+    if (currentRide) return 'heading_to_pickup';
+    if (incomingOffer) return 'incoming_offer';
+    return 'waiting';
+  }, [currentRide, incomingOffer, isOnline]);
 
   return {
     user,
@@ -569,12 +608,20 @@ export function useDriverScreen() {
     currentCoords,
     locationError,
     message,
+    driverPhase,
     navigationTarget,
     activeRideWaitMinutes,
     incomingOfferWaitMinutes,
     incomingOfferCountdownSeconds,
     estimatedTripDurationMinutes,
     defaultCoords: DEFAULT_COORDS,
+    isTogglingOnline,
+    isRefreshingRequests,
+    isRefreshingRide,
+    isRefreshingTracking,
+    activeOfferActionId,
+    activeClaimRideId,
+    isUpdatingRideStatus,
     handleAcceptRide,
     handleClaimOpenRideRequest,
     handleDeclineIncomingOffer,

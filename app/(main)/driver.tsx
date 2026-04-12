@@ -54,6 +54,54 @@ function formatTripDuration(minutes: number | null | undefined) {
   return `${minutes} min estimated trip`;
 }
 
+function getDriverPhaseCopy(phase: string) {
+  if (phase === 'offline') {
+    return {
+      title: 'You are offline',
+      subtitle:
+        'Go online when you are ready to receive nearby passenger requests and share your location.',
+    };
+  }
+
+  if (phase === 'incoming_offer') {
+    return {
+      title: 'Incoming request waiting for your decision',
+      subtitle:
+        'Review the pickup quickly. Accepting now reserves the trip for you and starts navigation.',
+    };
+  }
+
+  if (phase === 'heading_to_pickup') {
+    return {
+      title: 'Head to the pickup point',
+      subtitle:
+        'Use navigation and keep the ride status updated so the passenger knows what is happening.',
+    };
+  }
+
+  if (phase === 'trip_in_progress') {
+    return {
+      title: 'Passenger on board',
+      subtitle:
+        'Focus the screen on navigation, destination details, and the final completion step.',
+    };
+  }
+
+  if (phase === 'completed') {
+    return {
+      title: 'Ride complete',
+      subtitle:
+        'Refresh once to clear the finished trip and return to waiting mode for the next request.',
+    };
+  }
+
+  return {
+    title: 'Online and waiting',
+    subtitle:
+      'You are visible to nearby passengers. The closest suitable requests will surface here first.',
+  };
+}
+
 function getRideWaitMinutes(ride: AvailableRideType) {
   const rawDate = ride.requestedAt || ride.createdAt;
   if (!rawDate) return null;
@@ -121,10 +169,12 @@ export default function DriverScreen() {
     notLoggedIn,
     isOnline,
     driverScreenState,
+    driverPhase,
     openRideRequests,
     incomingOffer,
     currentRide,
     trackingSnapshot,
+    trackingUnavailable,
     currentCoords,
     locationError,
     message,
@@ -134,6 +184,13 @@ export default function DriverScreen() {
     incomingOfferCountdownSeconds,
     estimatedTripDurationMinutes,
     defaultCoords,
+    isTogglingOnline,
+    isRefreshingRequests,
+    isRefreshingRide,
+    isRefreshingTracking,
+    activeOfferActionId,
+    activeClaimRideId,
+    isUpdatingRideStatus,
     handleAcceptRide,
     handleClaimOpenRideRequest,
     handleDeclineIncomingOffer,
@@ -254,6 +311,9 @@ export default function DriverScreen() {
               ? 'Ride Complete'
               : 'Online and Waiting';
   const tripStage = getTripStage(currentRide?.status);
+  const phaseCopy = getDriverPhaseCopy(driverPhase);
+  const isOfferActionLoading =
+    incomingOffer?.offerId != null && activeOfferActionId === incomingOffer.offerId;
 
   return (
     <View style={styles.screen}>
@@ -282,9 +342,13 @@ export default function DriverScreen() {
 
             <View style={styles.availabilityWrap}>
               <Text style={styles.availabilityLabel}>
-                {isOnline ? 'Online' : 'Offline'}
+                {isTogglingOnline ? 'Updating' : isOnline ? 'Online' : 'Offline'}
               </Text>
-              <Switch value={isOnline} onValueChange={handleToggleOnlineStatus} />
+              <Switch
+                value={isOnline}
+                onValueChange={handleToggleOnlineStatus}
+                disabled={isTogglingOnline}
+              />
             </View>
           </View>
 
@@ -292,12 +356,40 @@ export default function DriverScreen() {
             <View style={styles.heroStatPill}>
               <Text style={styles.heroStatLabel}>Open Requests</Text>
               <Text style={styles.heroStatValue}>{relevantOpenRequests.length}</Text>
+              <Text style={styles.heroStatHint}>
+                {isRefreshingRequests ? 'Refreshing request pool...' : 'Closest rides are prioritized'}
+              </Text>
             </View>
+          </View>
+
+          <View style={styles.dispatchModeCard}>
+            <Text style={styles.dispatchModeTitle}>{phaseCopy.title}</Text>
+            <Text style={styles.helperText}>{phaseCopy.subtitle}</Text>
           </View>
         </View>
 
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-        {locationError ? <Text style={styles.message}>{locationError}</Text> : null}
+        {message ? (
+          <View
+            style={[
+              styles.globalBanner,
+              driverPhase === 'offline'
+                ? styles.infoBanner
+                : driverPhase === 'incoming_offer'
+                  ? styles.warningBanner
+                  : styles.successBanner,
+            ]}
+          >
+            <Text style={styles.globalBannerTitle}>Dispatch Update</Text>
+            <Text style={styles.globalBannerText}>{message}</Text>
+          </View>
+        ) : null}
+
+        {locationError ? (
+          <View style={[styles.globalBanner, styles.warningBanner]}>
+            <Text style={styles.globalBannerTitle}>Location Needed</Text>
+            <Text style={styles.globalBannerText}>{locationError}</Text>
+          </View>
+        ) : null}
 
         {!currentRide && isOnline ? (
           <View style={styles.card}>
@@ -324,7 +416,7 @@ export default function DriverScreen() {
                   </Text>
                   {incomingOffer?.id === closestRelevantRide.id &&
                   incomingOfferCountdownSeconds != null ? (
-                    <Text style={styles.helperText}>
+                    <Text style={styles.urgentCountdown}>
                       Offer expires in {incomingOfferCountdownSeconds}s
                     </Text>
                   ) : null}
@@ -349,26 +441,44 @@ export default function DriverScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={styles.actionButton}
+                  style={[
+                    styles.actionButton,
+                    (isOfferActionLoading ||
+                      activeClaimRideId === closestRelevantRide.id) &&
+                      styles.actionButtonDisabled,
+                  ]}
                   onPress={() =>
                     incomingOffer?.id === closestRelevantRide.id
                       ? handleAcceptRide(incomingOffer.offerId)
                       : handleClaimOpenRideRequest(closestRelevantRide.id)
                   }
+                  disabled={
+                    isOfferActionLoading || activeClaimRideId === closestRelevantRide.id
+                  }
                 >
                   <Text style={styles.actionButtonText}>
                     {incomingOffer?.id === closestRelevantRide.id
-                      ? 'Accept Request'
-                      : 'Claim Closest Ride'}
+                      ? isOfferActionLoading
+                        ? 'Accepting Request...'
+                        : 'Accept Request'
+                      : activeClaimRideId === closestRelevantRide.id
+                        ? 'Claiming Ride...'
+                        : 'Claim Closest Ride'}
                   </Text>
                 </TouchableOpacity>
 
                 {incomingOffer?.id === closestRelevantRide.id ? (
                   <TouchableOpacity
-                    style={styles.secondaryButton}
+                    style={[
+                      styles.secondaryButton,
+                      isOfferActionLoading && styles.secondaryButtonDisabled,
+                    ]}
                     onPress={handleDeclineIncomingOffer}
+                    disabled={isOfferActionLoading}
                   >
-                    <Text style={styles.secondaryButtonText}>Decline For Now</Text>
+                    <Text style={styles.secondaryButtonText}>
+                      {isOfferActionLoading ? 'Updating...' : 'Decline For Now'}
+                    </Text>
                   </TouchableOpacity>
                 ) : null}
               </>
@@ -471,11 +581,23 @@ export default function DriverScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={[
+                styles.secondaryButton,
+                isRefreshingTracking && styles.secondaryButtonDisabled,
+              ]}
               onPress={handleRefreshTracking}
+              disabled={isRefreshingTracking}
             >
-              <Text style={styles.secondaryButtonText}>Refresh Live Data</Text>
+              <Text style={styles.secondaryButtonText}>
+                {isRefreshingTracking ? 'Refreshing Live Data...' : 'Refresh Live Data'}
+              </Text>
             </TouchableOpacity>
+
+            <Text style={styles.refreshMetaText}>
+              {trackingUnavailable
+                ? 'Live tracking is temporarily unavailable.'
+                : 'Driver and passenger locations refresh automatically while the trip is active.'}
+            </Text>
           </View>
         ) : null}
 
@@ -545,22 +667,34 @@ export default function DriverScreen() {
 
             {tripStage.actionLabel && tripStage.nextStatus ? (
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[
+                  styles.actionButton,
+                  isUpdatingRideStatus && styles.actionButtonDisabled,
+                ]}
                 onPress={() => {
                   const nextStatus = tripStage.nextStatus;
                   if (!nextStatus) return;
                   handleUpdateRideStatus(nextStatus);
                 }}
+                disabled={isUpdatingRideStatus}
               >
-                <Text style={styles.actionButtonText}>{tripStage.actionLabel}</Text>
+                <Text style={styles.actionButtonText}>
+                  {isUpdatingRideStatus ? 'Updating Ride...' : tripStage.actionLabel}
+                </Text>
               </TouchableOpacity>
             ) : null}
 
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={[
+                styles.secondaryButton,
+                isRefreshingRide && styles.secondaryButtonDisabled,
+              ]}
               onPress={handleGetCurrentRide}
+              disabled={isRefreshingRide}
             >
-              <Text style={styles.secondaryButtonText}>Refresh Current Ride</Text>
+              <Text style={styles.secondaryButtonText}>
+                {isRefreshingRide ? 'Refreshing Current Ride...' : 'Refresh Current Ride'}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -634,19 +768,36 @@ export default function DriverScreen() {
                     </View>
 
                     <TouchableOpacity
-                      style={styles.actionButton}
+                      style={[
+                        styles.actionButton,
+                        activeClaimRideId === selectedOpenRide.id &&
+                          styles.actionButtonDisabled,
+                      ]}
                       onPress={() => handleClaimOpenRideRequest(selectedOpenRide.id)}
+                      disabled={activeClaimRideId === selectedOpenRide.id}
                     >
-                      <Text style={styles.actionButtonText}>Claim This Ride</Text>
+                      <Text style={styles.actionButtonText}>
+                        {activeClaimRideId === selectedOpenRide.id
+                          ? 'Claiming Ride...'
+                          : 'Claim This Ride'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : null}
 
                 <TouchableOpacity
-                  style={styles.secondaryButton}
+                  style={[
+                    styles.secondaryButton,
+                    isRefreshingRequests && styles.secondaryButtonDisabled,
+                  ]}
                   onPress={handleGetOpenRideRequests}
+                  disabled={isRefreshingRequests}
                 >
-                  <Text style={styles.secondaryButtonText}>Refresh Open Requests</Text>
+                  <Text style={styles.secondaryButtonText}>
+                    {isRefreshingRequests
+                      ? 'Refreshing Open Requests...'
+                      : 'Refresh Open Requests'}
+                  </Text>
                 </TouchableOpacity>
 
                 {relevantOpenRequests.length === 0 ? (
@@ -670,10 +821,18 @@ export default function DriverScreen() {
                         </Text>
 
                         <TouchableOpacity
-                          style={styles.secondaryButton}
+                          style={[
+                            styles.secondaryButton,
+                            activeClaimRideId === ride.id && styles.secondaryButtonDisabled,
+                          ]}
                           onPress={() => handleClaimOpenRideRequest(ride.id)}
+                          disabled={activeClaimRideId === ride.id}
                         >
-                          <Text style={styles.secondaryButtonText}>Claim This Ride</Text>
+                          <Text style={styles.secondaryButtonText}>
+                            {activeClaimRideId === ride.id
+                              ? 'Claiming Ride...'
+                              : 'Claim This Ride'}
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     ))}

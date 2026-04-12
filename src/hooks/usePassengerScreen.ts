@@ -70,7 +70,11 @@ export function usePassengerScreen() {
   const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
-  const passengerId = user?.passengerId;
+  const passengerId = user?.passengerId ?? null;
+  const hasBlockingRide =
+    !!currentRide &&
+    currentRide.status !== 'Completed' &&
+    currentRide.status !== 'Cancelled';
 
   const shouldShowBottomSheet =
     !!pickupCoords &&
@@ -78,7 +82,7 @@ export function usePassengerScreen() {
     pickupSelected &&
     destinationSelected &&
     reviewRequested &&
-    !currentRide &&
+    !hasBlockingRide &&
     !isSearchingDriver;
 
   const shouldTrackPassengerLocation =
@@ -204,19 +208,22 @@ export function usePassengerScreen() {
       setIsRefreshingRide(true);
       const data = await getPassengerCurrentRide(passengerId);
       setCurrentRide(data);
-      setMessage('');
-      setIsSearchingDriver(false);
+      setTrackingUnavailable(false);
+
+      if (data) {
+        setMessage('');
+        setIsSearchingDriver(false);
+      } else {
+        setOrderPlacedRide(null);
+        setTrackingSnapshot(null);
+        setMessage('');
+      }
     } catch (error: any) {
       setCurrentRide(null);
       setOrderPlacedRide(null);
       setTrackingSnapshot(null);
       setTrackingUnavailable(false);
-
-      if (error?.response?.status === 404) {
-        setMessage(error?.response?.data || 'No current ride.');
-      } else {
-        setMessage(error?.response?.data || 'Failed to load ride.');
-      }
+      setMessage(error?.response?.data || 'Failed to load ride.');
     } finally {
       setIsRefreshingRide(false);
     }
@@ -228,7 +235,7 @@ export function usePassengerScreen() {
     try {
       const data = await getPassengerPendingFeedbackRide(passengerId);
       setPendingFeedbackRide(data);
-    } catch (error: any) {
+    } catch {
       setPendingFeedbackRide(null);
     }
   };
@@ -424,13 +431,13 @@ export function usePassengerScreen() {
       });
 
       const currentRideData = await getPassengerCurrentRide(passengerId);
-      setCurrentRide(currentRideData);
-      setTrackingUnavailable(false);
       setOrderPlacedRide({
         rideSummary: rideSummarySnapshot,
         rideId: currentRideData?.id,
-        status: currentRideData?.status,
+        status: currentRideData?.status || 'Pending',
       });
+      setCurrentRide(currentRideData);
+      setTrackingUnavailable(false);
       setMessage('Your ride request has been placed successfully.');
       setIsSearchingDriver(false);
       resetRideForm();
@@ -467,7 +474,7 @@ export function usePassengerScreen() {
   const handleSubmitFeedback = async () => {
     if (!passengerId || !pendingFeedbackRide) {
       Alert.alert('Error', 'No completed ride is waiting for feedback.');
-      return;
+      return false;
     }
 
     try {
@@ -494,14 +501,19 @@ export function usePassengerScreen() {
       setLuggageHandlingRating('');
       setComment('');
       setPendingFeedbackRide(null);
+      setCurrentRide(null);
+      setOrderPlacedRide(null);
+      setTrackingSnapshot(null);
+      setTrackingUnavailable(false);
 
       await handleGetCoinBalance();
-      await handleGetCurrentRide();
       await handleGetPendingFeedbackRide();
+      return true;
     } catch (error: any) {
       const msg = error?.response?.data || 'Failed to submit feedback';
       setMessage(msg);
       Alert.alert('Feedback Failed', msg);
+      return false;
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -546,6 +558,12 @@ export function usePassengerScreen() {
 
     return () => clearInterval(intervalId);
   }, [currentRide?.id, currentRide?.status, passengerId]);
+
+  useEffect(() => {
+    if (!passengerId || currentRide?.status !== 'Completed') return;
+
+    handleGetPendingFeedbackRide();
+  }, [currentRide?.status, passengerId]);
 
   useLiveLocation({
     enabled: shouldTrackPassengerLocation,

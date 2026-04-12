@@ -13,7 +13,6 @@ import {
 
 import AppNavbar from '../../src/components/AppNavbar';
 import CurrentRideCard from '../../src/components/passenger/CurrentRideCard';
-import FeedbackCard from '../../src/components/passenger/FeedbackCard';
 import OrderPlacedCard from '../../src/components/passenger/OrderPlacedCard';
 import PassengerBottomSheet from '../../src/components/passenger/PassengerBottomSheet';
 import PassengerMapCard from '../../src/components/passenger/PassengerMapCard';
@@ -45,19 +44,11 @@ export default function PassengerScreen() {
     coinBalance,
     currentRide,
     orderPlacedRide,
-    pendingFeedbackRide,
-    rating,
-    wasDriverPolite,
-    wasDriverOnTime,
-    wasVehicleClean,
-    luggageHandlingRating,
-    comment,
     passengerRidePhase,
     shouldShowBottomSheet,
     isSearchingDriver,
     isCreatingRide,
     isRefreshingRide,
-    isSubmittingFeedback,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -70,15 +61,8 @@ export default function PassengerScreen() {
     setRideType,
     setScheduledTime,
     setIsShared,
-    setRating,
-    setWasDriverPolite,
-    setWasDriverOnTime,
-    setWasVehicleClean,
-    setLuggageHandlingRating,
-    setComment,
     handleCreateRide,
     handleGetCurrentRide,
-    handleSubmitFeedback,
   } = usePassengerScreen();
 
   if (notLoggedIn) {
@@ -97,6 +81,7 @@ export default function PassengerScreen() {
   const profileImageStorageKey = user?.passengerId
     ? `passenger_profile_image_url_${user.passengerId}`
     : undefined;
+  const hasCompletedRide = currentRide?.status === 'Completed';
   const shouldShowCurrentRideCard =
     !!currentRide && currentRide.status !== 'Pending' && currentRide.status !== 'Completed';
   const shouldShowOrderPlacedCard =
@@ -111,89 +96,92 @@ export default function PassengerScreen() {
         profileImageStorageKey={profileImageStorageKey}
       />
 
-      <View style={styles.mapContainer}>
-        <PassengerMapCard
-          mapRegion={mapRegion}
-          pickupCoords={pickupCoords}
-          destinationCoords={destinationCoords}
-          pickupLocation={pickupLocation}
-          destination={destination}
-          currentRide={currentRide}
-        />
-      </View>
-
-      {shouldShowOrderPlacedCard ? (
-        <View style={styles.formContainer}>
-          <OrderPlacedCard
-            rideSummary={orderPlacedRide?.rideSummary || rideSummary}
-            rideId={orderPlacedRide?.rideId || currentRide?.id}
-            status={orderPlacedRide?.status || currentRide?.status}
-            onRefreshRideStatus={handleGetCurrentRide}
-            onTrackRide={() => router.push('/(main)/passenger-tracking')}
-          />
-        </View>
-      ) : currentRide ? (
-        <View style={styles.formContainer}>
-          <CurrentRideCard
-            currentRide={currentRide}
-            onRefreshRideStatus={handleGetCurrentRide}
-            isRefreshing={isRefreshingRide}
-            onTrackRide={() => router.push('/(main)/passenger-tracking')}
-          />
-
-          {currentRide.status === 'Completed' ? (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Trip Completed</Text>
-              <Text style={styles.helperText}>
-                Thanks for riding with Taxi Manager. If your ride is waiting for feedback,
-                you can rate it below and earn coins for future trips.
-              </Text>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={handleGetCurrentRide}
-              >
-                <Text style={styles.secondaryButtonText}>Refresh Ride Summary</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </View>
-      ) : (
-        <KeyboardAvoidingView
-          style={styles.floatingFormContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 12}
+      {message ? (
+        <View
+          style={[
+            styles.inlineBanner,
+            passengerRidePhase === 'planning'
+              ? styles.infoBanner
+              : styles.successBanner,
+          ]}
         >
-          <View style={styles.floatingFormCard}>
-            <TouchableOpacity
-              style={styles.floatingFormHeader}
-              activeOpacity={0.9}
-              onPress={() => setIsRideFormExpanded((value) => !value)}
-            >
-              <View style={styles.floatingHandle} />
-              <View style={styles.floatingHeaderRow}>
-                <View>
-                  <Text style={styles.floatingFormTitle}>Ride Details</Text>
-                  <Text style={styles.floatingFormSubtitle}>
-                    {pickupLocation || destination
-                      ? 'Your draft is saved here. Tap to continue editing.'
-                      : 'Tap to enter your pickup, destination, and trip details.'}
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name={isRideFormExpanded ? 'chevron-down' : 'chevron-up'}
-                  size={24}
-                  color="#111827"
-                />
-              </View>
-            </TouchableOpacity>
+          <Text style={styles.globalBannerTitle}>
+            {passengerRidePhase === 'planning'
+              ? 'Update'
+              : passengerRidePhase === 'searching' || passengerRidePhase === 'waiting_match'
+                ? 'Ride Status'
+                : 'Latest Update'}
+          </Text>
+          <Text style={styles.globalBannerText}>{message}</Text>
+        </View>
+      ) : null}
 
-            {isRideFormExpanded ? (
-              <ScrollView
-                style={styles.floatingFormScroll}
-                contentContainerStyle={styles.floatingFormScrollContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
+      <ScrollView
+        style={styles.mainContent}
+        contentContainerStyle={styles.passengerScrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.mapSection}>
+          <PassengerMapCard
+            mapRegion={mapRegion}
+            pickupCoords={pickupCoords}
+            destinationCoords={destinationCoords}
+            pickupLocation={pickupLocation}
+            destination={destination}
+            currentRide={currentRide}
+          />
+        </View>
+
+        {shouldShowOrderPlacedCard ? (
+          <View style={styles.sectionSpacing}>
+            <OrderPlacedCard
+              rideSummary={orderPlacedRide?.rideSummary || rideSummary}
+              rideId={orderPlacedRide?.rideId || currentRide?.id}
+              status={orderPlacedRide?.status || currentRide?.status}
+              onRefreshRideStatus={handleGetCurrentRide}
+              onTrackRide={() => router.push('/(main)/passenger-tracking')}
+            />
+          </View>
+        ) : currentRide && !hasCompletedRide ? (
+          <View style={styles.sectionSpacing}>
+            <CurrentRideCard
+              currentRide={currentRide}
+              onRefreshRideStatus={handleGetCurrentRide}
+              isRefreshing={isRefreshingRide}
+              onTrackRide={() => router.push('/(main)/passenger-tracking')}
+            />
+          </View>
+        ) : (
+          <KeyboardAvoidingView
+            style={styles.rideComposerContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 0}
+          >
+            <View style={styles.rideComposerCard}>
+              <TouchableOpacity
+                style={styles.floatingFormHeader}
+                activeOpacity={0.9}
+                onPress={() => setIsRideFormExpanded((value) => !value)}
               >
+                <View style={styles.floatingHeaderRow}>
+                  <View style={styles.rideComposerTextWrap}>
+                    <Text style={styles.floatingFormTitle}>Ride Details</Text>
+                    <Text style={styles.floatingFormSubtitle}>
+                      {pickupLocation || destination
+                        ? 'Your draft is saved here. Tap to continue editing.'
+                        : 'Add your pickup, destination, and trip preferences to continue.'}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name={isRideFormExpanded ? 'chevron-down' : 'chevron-up'}
+                    size={24}
+                    color="#111827"
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {isRideFormExpanded ? (
                 <RideDetailsCard
                   pickupLocation={pickupLocation}
                   setPickupLocation={handlePickupTextChange}
@@ -219,39 +207,20 @@ export default function PassengerScreen() {
                   setIsShared={setIsShared}
                   onReviewRide={handleReviewRide}
                 />
-              </ScrollView>
-            ) : (
-              <View style={styles.collapsedFormSummary}>
-                <Text style={styles.collapsedFormText}>
-                  {pickupLocation || destination
-                    ? `${pickupLocation || 'Pickup'} -> ${destination || 'Destination'}`
-                    : 'Your ride form is collapsed. Tap above to continue.'}
-                </Text>
-              </View>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      )}
+              ) : (
+                <View style={styles.collapsedFormSummary}>
+                  <Text style={styles.collapsedFormText}>
+                    {pickupLocation || destination
+                      ? `${pickupLocation || 'Pickup'} -> ${destination || 'Destination'}`
+                      : 'Tap above to start entering your ride details.'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+        )}
 
-      {pendingFeedbackRide && (
-        <FeedbackCard
-          pendingFeedbackRide={pendingFeedbackRide}
-          rating={rating}
-          setRating={setRating}
-          wasDriverPolite={wasDriverPolite}
-          setWasDriverPolite={setWasDriverPolite}
-          wasDriverOnTime={wasDriverOnTime}
-          setWasDriverOnTime={setWasDriverOnTime}
-          wasVehicleClean={wasVehicleClean}
-          setWasVehicleClean={setWasVehicleClean}
-          luggageHandlingRating={luggageHandlingRating}
-          setLuggageHandlingRating={setLuggageHandlingRating}
-          comment={comment}
-          setComment={setComment}
-          onSubmitFeedback={handleSubmitFeedback}
-          isSubmitting={isSubmittingFeedback}
-        />
-      )}
+      </ScrollView>
 
       {isSearchingDriver && (
         <View style={styles.searchingBox}>
@@ -266,26 +235,6 @@ export default function PassengerScreen() {
           </Text>
         </View>
       )}
-
-      {message ? (
-        <View
-          style={[
-            styles.globalBanner,
-            passengerRidePhase === 'planning'
-              ? styles.infoBanner
-              : styles.successBanner,
-          ]}
-        >
-          <Text style={styles.globalBannerTitle}>
-            {passengerRidePhase === 'planning'
-              ? 'Update'
-              : passengerRidePhase === 'searching' || passengerRidePhase === 'waiting_match'
-                ? 'Ride Status'
-                : 'Latest Update'}
-          </Text>
-          <Text style={styles.globalBannerText}>{message}</Text>
-        </View>
-      ) : null}
 
       {shouldShowBottomSheet && (
         <PassengerBottomSheet

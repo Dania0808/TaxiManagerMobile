@@ -1,4 +1,5 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { LatLng, RideSummary, RideType } from '../../types/passenger';
@@ -45,13 +46,34 @@ export default function PassengerBottomSheet({
       };
 
   return (
-      <View style={styles.bottomSheetBackdrop}>
+    <View style={styles.bottomSheetBackdrop}>
       <View style={styles.bottomSheet}>
-        <View style={styles.bottomSheetContent}>
-          <Text style={styles.bottomTitle}>Review Your Ride</Text>
-          <Text style={styles.formSubtitle}>
-            Check your trip details before sending the request to nearby drivers.
-          </Text>
+        <View style={styles.bottomSheetHeader}>
+          <TouchableOpacity style={styles.bottomSheetBackAction} onPress={onBack}>
+            <MaterialCommunityIcons name="arrow-left" size={18} color="#111827" />
+            <Text style={styles.bottomSheetBackActionText}>Edit Details</Text>
+          </TouchableOpacity>
+
+          <View style={styles.bottomSheetTitleWrap}>
+            <Text style={styles.bottomTitle}>Review Your Ride</Text>
+            <Text style={styles.bottomSheetSubtitle}>
+              Check everything before sending your request to nearby drivers.
+            </Text>
+          </View>
+        </View>
+
+        <ScrollView
+          style={styles.bottomSheetScroll}
+          contentContainerStyle={styles.bottomSheetContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.bottomSummaryBanner}>
+            <Text style={styles.bottomSummaryTitle}>Nothing is lost if you go back</Text>
+            <Text style={styles.bottomSummaryText}>
+              You can return to the form, adjust any field, and come back here with your
+              entered details still saved.
+            </Text>
+          </View>
 
           {hasRoute && (
             <View style={styles.bottomMapWrapper}>
@@ -119,27 +141,22 @@ export default function PassengerBottomSheet({
               </View>
             )}
           </View>
+        </ScrollView>
 
-          <View style={styles.bottomButtonWrap}>
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                isSubmitting && styles.primaryButtonDisabled,
-              ]}
-              onPress={onOrderNow}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.primaryButtonText}>
-                {isSubmitting ? 'Sending request...' : 'Order Now'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bottomBackRow}>
-            <TouchableOpacity onPress={onBack} style={styles.bottomBackButton}>
-              <Text style={styles.bottomBackHint}>Back</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.bottomFooter}>
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              styles.bottomPrimaryAction,
+              isSubmitting && styles.primaryButtonDisabled,
+            ]}
+            onPress={onOrderNow}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.primaryButtonText}>
+              {isSubmitting ? 'Sending request...' : 'Confirm and Order'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

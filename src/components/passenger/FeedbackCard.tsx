@@ -39,6 +39,9 @@ export default function FeedbackCard({
 }: FeedbackCardProps) {
   if (!pendingFeedbackRide) return null;
 
+  const ratingOptions = ['1', '2', '3', '4', '5'];
+  const luggageOptions = ['1', '2', '3', '4', '5'];
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Give Feedback & Earn Coins</Text>
@@ -46,52 +49,84 @@ export default function FeedbackCard({
         Help us improve and receive coins that count like shekels in future pricing.
       </Text>
 
-      <Text>
-        <Text style={styles.bold}>Ride Id:</Text> {pendingFeedbackRide.id}
-      </Text>
-      <Text>
-        <Text style={styles.bold}>Pickup:</Text> {pendingFeedbackRide.pickupLocation}
-      </Text>
-      <Text>
-        <Text style={styles.bold}>Destination:</Text> {pendingFeedbackRide.destination}
-      </Text>
+      <View style={styles.feedbackTripSummary}>
+        <Text style={styles.feedbackTripRowLabel}>Ride #{pendingFeedbackRide.id}</Text>
+        <Text style={styles.feedbackTripRowValue}>
+          {pendingFeedbackRide.pickupLocation || 'Unknown pickup'}
+        </Text>
+        <Text style={styles.feedbackTripRowArrow}>to</Text>
+        <Text style={styles.feedbackTripRowValue}>
+          {pendingFeedbackRide.destination || 'Unknown destination'}
+        </Text>
+      </View>
 
-      <TextInput
-        placeholder="Rating (1-5)"
-        value={rating}
-        onChangeText={setRating}
-        style={styles.input}
-        keyboardType="numeric"
-      />
+      <Text style={styles.feedbackSectionTitle}>Overall Rating</Text>
+      <View style={styles.feedbackChoiceRow}>
+        {ratingOptions.map((option) => (
+          <TouchableOpacity
+            key={option}
+            style={[
+              styles.feedbackChip,
+              rating === option && styles.feedbackChipActive,
+            ]}
+            onPress={() => setRating(option)}
+          >
+            <Text
+              style={[
+                styles.feedbackChipText,
+                rating === option && styles.feedbackChipTextActive,
+              ]}
+            >
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <View style={styles.switchRow}>
-        <Text>Driver was polite</Text>
+        <Text style={styles.feedbackSwitchLabel}>Driver was polite</Text>
         <Switch value={wasDriverPolite} onValueChange={setWasDriverPolite} />
       </View>
 
       <View style={styles.switchRow}>
-        <Text>Driver was on time</Text>
+        <Text style={styles.feedbackSwitchLabel}>Driver was on time</Text>
         <Switch value={wasDriverOnTime} onValueChange={setWasDriverOnTime} />
       </View>
 
       <View style={styles.switchRow}>
-        <Text>Vehicle was clean</Text>
+        <Text style={styles.feedbackSwitchLabel}>Vehicle was clean</Text>
         <Switch value={wasVehicleClean} onValueChange={setWasVehicleClean} />
       </View>
 
-      <TextInput
-        placeholder="Luggage Handling Rating (optional)"
-        value={luggageHandlingRating}
-        onChangeText={setLuggageHandlingRating}
-        style={styles.input}
-        keyboardType="numeric"
-      />
+      <Text style={styles.feedbackSectionTitle}>Luggage Handling</Text>
+      <Text style={styles.helperText}>Optional, only if luggage handling mattered on this trip.</Text>
+      <View style={styles.feedbackChoiceRow}>
+        {luggageOptions.map((option) => (
+          <TouchableOpacity
+            key={option}
+            style={[
+              styles.feedbackChip,
+              luggageHandlingRating === option && styles.feedbackChipActive,
+            ]}
+            onPress={() => setLuggageHandlingRating(option)}
+          >
+            <Text
+              style={[
+                styles.feedbackChipText,
+                luggageHandlingRating === option && styles.feedbackChipTextActive,
+              ]}
+            >
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <TextInput
-        placeholder="Comment"
+        placeholder="Add a short comment"
         value={comment}
         onChangeText={setComment}
-        style={styles.input}
+        style={[styles.input, styles.feedbackCommentInput]}
         multiline
       />
 

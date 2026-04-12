@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,6 +29,7 @@ import {
 } from '../../src/types/driver';
 
 export default function DriverProfileScreen() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -41,6 +42,8 @@ export default function DriverProfileScreen() {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [vehiclePlateNumber, setVehiclePlateNumber] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [statusType, setStatusType] = useState<'info' | 'error' | 'success'>('info');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -163,6 +166,8 @@ export default function DriverProfileScreen() {
 
   const handleSaveProfile = async () => {
     if (!driverId) {
+      setStatusType('success');
+      setStatusMessage('Driver profile saved locally.');
       await persistUserPhoneNumber(phoneNumber);
       setProfile((currentProfile) => ({
         ...currentProfile,
@@ -177,6 +182,8 @@ export default function DriverProfileScreen() {
 
     try {
       setSaving(true);
+      setStatusType('info');
+      setStatusMessage('Saving your driver profile...');
       await updateDriverProfile(driverId, {
         phoneNumber,
         carModel,
@@ -186,6 +193,8 @@ export default function DriverProfileScreen() {
 
       await persistUserPhoneNumber(phoneNumber);
       await refreshProfile();
+      setStatusType('success');
+      setStatusMessage('Driver profile updated successfully.');
       Alert.alert('Profile', 'Driver profile updated successfully.');
     } catch (error: any) {
       await persistUserPhoneNumber(phoneNumber);
@@ -196,6 +205,10 @@ export default function DriverProfileScreen() {
         licenseNumber,
         vehiclePlateNumber,
       }));
+      setStatusType('error');
+      setStatusMessage(
+        error?.response?.data || 'Failed to update driver profile.'
+      );
       Alert.alert(
         'Profile',
         error?.response?.data ||
@@ -251,12 +264,16 @@ export default function DriverProfileScreen() {
       const fileType = asset.mimeType || 'image/jpeg';
 
       setUploadingImage(true);
+      setStatusType('info');
+      setStatusMessage('Uploading your driver profile photo...');
 
       if (!driverId) {
         setProfileImageUrl(uri);
         if (profileImageStorageKey) {
           await AsyncStorage.setItem(profileImageStorageKey, uri);
         }
+        setStatusType('success');
+        setStatusMessage('Profile photo saved locally.');
         Alert.alert('Profile', 'Profile photo saved locally.');
         return;
       }
@@ -279,12 +296,18 @@ export default function DriverProfileScreen() {
           await AsyncStorage.setItem(profileImageStorageKey, nextUrl);
         }
         await refreshProfile();
+        setStatusType('success');
+        setStatusMessage('Profile photo updated successfully.');
         Alert.alert('Profile', 'Profile photo updated successfully.');
       } catch (error: any) {
         setProfileImageUrl(uri);
         if (profileImageStorageKey) {
           await AsyncStorage.setItem(profileImageStorageKey, uri);
         }
+        setStatusType('error');
+        setStatusMessage(
+          error?.response?.data || error?.message || 'Failed to upload profile photo.'
+        );
         Alert.alert(
           'Profile Photo',
           error?.response?.data || error?.message || 'Failed to upload profile photo.'
@@ -321,6 +344,30 @@ export default function DriverProfileScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.push('/(main)/driver')}
+          activeOpacity={0.85}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={18} color="#111827" />
+          <Text style={styles.backButtonText}>Back to Driver Home</Text>
+        </TouchableOpacity>
+
+        {statusMessage ? (
+          <View
+            style={[
+              styles.banner,
+              statusType === 'error'
+                ? styles.bannerError
+                : statusType === 'success'
+                  ? styles.bannerSuccess
+                  : styles.bannerInfo,
+            ]}
+          >
+            <Text style={styles.bannerText}>{statusMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.heroCard}>
           <Image source={{ uri: avatarUri }} style={styles.avatar} />
           <Text style={styles.name}>{profile?.fullName || user?.fullName || 'Driver'}</Text>
@@ -460,6 +507,29 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 36,
   },
+  backButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  backButtonText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   heroCard: {
     backgroundColor: '#ffffff',
     borderRadius: 28,
@@ -574,6 +644,31 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontSize: 14,
     lineHeight: 20,
+  },
+  banner: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  bannerInfo: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+  },
+  bannerError: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  bannerSuccess: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+  bannerText: {
+    color: '#111827',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
   },
   historyItem: {
     borderWidth: 1,

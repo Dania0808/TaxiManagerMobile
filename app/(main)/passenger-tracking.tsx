@@ -1,11 +1,13 @@
-import { Redirect } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import AppNavbar from '../../src/components/AppNavbar';
 import { usePassengerScreen } from '../../src/hooks/usePassengerScreen';
 import { passengerStyles as styles } from '../../src/styles/passengerStyles';
 
 export default function PassengerTrackingScreen() {
+  const router = useRouter();
   const {
     user,
     loadingUser,
@@ -13,12 +15,20 @@ export default function PassengerTrackingScreen() {
     currentRide,
     trackingSnapshot,
     trackingUnavailable,
+    pendingFeedbackRide,
     isRefreshingRide,
     isRefreshingTracking,
     passengerRidePhase,
     handleGetCurrentRide,
     handleRefreshTrackingSnapshot,
   } = usePassengerScreen();
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  useEffect(() => {
+    if (currentRide?.status === 'Completed' && pendingFeedbackRide) {
+      setShowCompletionModal(true);
+    }
+  }, [currentRide?.status, pendingFeedbackRide]);
 
   if (notLoggedIn) {
     return <Redirect href="/(auth)" />;
@@ -74,6 +84,13 @@ export default function PassengerTrackingScreen() {
 
   const routeTarget =
     currentRide?.status === 'PickedUp' ? destinationCoords : pickupCoords;
+  const trackingTitle = useMemo(() => {
+    if (currentRide?.status === 'Completed') {
+      return 'Ride Completed';
+    }
+
+    return 'Track Your Driver';
+  }, [currentRide?.status]);
 
   return (
     <View style={styles.screen}>
@@ -81,10 +98,11 @@ export default function PassengerTrackingScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Track Your Driver</Text>
+          <Text style={styles.cardTitle}>{trackingTitle}</Text>
           <Text style={styles.helperText}>
-            This page shows the driver&apos;s live position and the current trip
-            stage.
+            {currentRide?.status === 'Completed'
+              ? 'Your trip has ended. Review the final details below and leave feedback to earn coins.'
+              : 'This page shows the driver&apos;s live position and the current trip stage.'}
           </Text>
 
           {trackingUnavailable ? (
@@ -206,6 +224,50 @@ export default function PassengerTrackingScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showCompletionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.completionModalBackdrop}>
+          <View style={styles.completionModalCard}>
+            <View style={styles.completionModalHeader}>
+              <View style={styles.completionModalIconWrap}>
+                <Text style={styles.completionModalIcon}>✓</Text>
+              </View>
+              <Text style={styles.completionModalTitle}>Your ride has ended</Text>
+              <Text style={styles.completionModalSubtitle}>
+                Thanks for riding with Taxi Manager. Give feedback now to complete the trip
+                and earn your coins.
+              </Text>
+            </View>
+
+            <View style={styles.completionModalActionArea}>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => {
+                  setShowCompletionModal(false);
+                  router.push('/(main)/passenger-feedback');
+                }}
+              >
+                <Text style={styles.primaryButtonText}>Give Feedback Now</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.bottomSecondaryAction}
+                onPress={() => {
+                  setShowCompletionModal(false);
+                  router.replace('/(main)/passenger');
+                }}
+              >
+                <Text style={styles.bottomSecondaryActionText}>Later</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

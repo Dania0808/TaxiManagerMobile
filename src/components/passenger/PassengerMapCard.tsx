@@ -25,6 +25,17 @@ export default function PassengerMapCard({
     pickupCoords && destinationCoords
       ? [pickupCoords, destinationCoords]
       : [];
+  const hasActiveRide =
+    !!currentRide &&
+    currentRide.status !== 'Completed' &&
+    currentRide.status !== 'Cancelled';
+  const overlayTitle = hasActiveRide ? 'Ride in progress' : 'Plan your route';
+  const overlayIcon = hasActiveRide ? 'car-connected' : 'map-marker-path';
+  const overlaySubtitle = hasActiveRide
+    ? 'We will show live tracking here when driver updates are available.'
+    : pickupCoords && destinationCoords
+      ? 'Your pickup and destination are pinned. Review the route before booking.'
+      : 'Choose your pickup and destination to preview the ride path.';
 
   return (
     <View style={styles.mapHeroCard}>
@@ -61,23 +72,15 @@ export default function PassengerMapCard({
         <View style={styles.mapOverlayHeader}>
           <View style={styles.mapOverlayIconWrap}>
             <MaterialCommunityIcons
-              name={currentRide?.driverId ? 'car-connected' : 'map-marker-path'}
+              name={overlayIcon}
               size={18}
               color="#111827"
             />
           </View>
-          <Text style={styles.mapOverlayTitle}>
-            {currentRide?.driverId ? 'Ride in progress' : 'Plan your route'}
-          </Text>
+          <Text style={styles.mapOverlayTitle}>{overlayTitle}</Text>
         </View>
 
-        <Text style={styles.mapOverlaySubtitle}>
-          {currentRide?.driverId
-            ? 'We will show live tracking here when driver updates are available.'
-            : pickupCoords && destinationCoords
-              ? 'Your pickup and destination are pinned. Review the route before booking.'
-              : 'Choose your pickup and destination to preview the ride path.'}
-        </Text>
+        <Text style={styles.mapOverlaySubtitle}>{overlaySubtitle}</Text>
       </View>
     </View>
   );
