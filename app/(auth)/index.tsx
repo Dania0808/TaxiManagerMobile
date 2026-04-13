@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -126,7 +126,9 @@ export default function LoginScreen() {
 
       // 🔥 SAVE USER + TOKEN (CRITICAL)
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', user.token);
+      if (user.token) {
+        await AsyncStorage.setItem('token', user.token);
+      }
 
       console.log('Saved user:', user);
 
