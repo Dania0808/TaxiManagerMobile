@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useLiveLocation } from './useLiveLocation';
 import {
@@ -7,6 +7,7 @@ import {
   searchGooglePlaces,
 } from '../services/googlePlacesService';
 import {
+  cancelPassengerRide,
   createPassengerRide,
   getPassengerCoinBalance,
   getPassengerCurrentRide,
@@ -24,10 +25,12 @@ import {
   PlaceSuggestion,
   RideType,
   StoredUser,
+  isCancelledRideStatus,
 } from '../types/passenger';
 import { RideTrackingSnapshot } from '../types/liveTracking';
 
 export function usePassengerScreen() {
+  const previousRideStatusRef = useRef<string | null>(null);
   const [user, setUser] = useState<StoredUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
@@ -69,12 +72,13 @@ export function usePassengerScreen() {
   const [isRefreshingRide, setIsRefreshingRide] = useState(false);
   const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [isCancellingRide, setIsCancellingRide] = useState(false);
 
   const passengerId = user?.passengerId ?? null;
   const hasBlockingRide =
     !!currentRide &&
     currentRide.status !== 'Completed' &&
-    currentRide.status !== 'Cancelled';
+    !isCancelledRideStatus(currentRide.status);
 
   const shouldShowBottomSheet =
     !!pickupCoords &&
@@ -92,9 +96,105 @@ export function usePassengerScreen() {
     !!currentRide.driverId &&
     currentRide.status !== 'Pending' &&
     currentRide.status !== 'Completed' &&
-    currentRide.status !== 'Cancelled';
+    !isCancelledRideStatus(currentRide.status);
 
   const mapRegion = useMemo(() => {
+    const trackingPickupCoords = trackingSnapshot?.pickupCoords ?? null;
+    const trackingDestinationCoords = trackingSnapshot?.destinationCoords ?? null;
+    const trackingDriverCoords = trackingSnapshot?.driverLocation
+      ? {
+          latitude: trackingSnapshot.driverLocation.latitude,
+          longitude: trackingSnapshot.driverLocation.longitude,
+        }
+      : null;
+    const trackingPassengerCoords = trackingSnapshot?.passengerLocation
+      ? {
+          latitude: trackingSnapshot.passengerLocation.latitude,
+          longitude: trackingSnapshot.passengerLocation.longitude,
+        }
+      : null;
+    const currentRidePickupCoords =
+      currentRide?.pickupLatitude != null && currentRide?.pickupLongitude != null
+        ? {
+            latitude: currentRide.pickupLatitude,
+            longitude: currentRide.pickupLongitude,
+          }
+        : null;
+    const currentRideDestinationCoords =
+      currentRide?.destinationLatitude != null && currentRide?.destinationLongitude != null
+        ? {
+            latitude: currentRide.destinationLatitude,
+            longitude: currentRide.destinationLongitude,
+          }
+        : null;
+    const activePickupCoords = trackingPickupCoords ?? currentRidePickupCoords;
+    const activeDestinationCoords =
+      trackingDestinationCoords ?? currentRideDestinationCoords;
+
+    if (trackingDriverCoords && trackingPassengerCoords) {
+      return {
+        latitude:
+          (trackingDriverCoords.latitude + trackingPassengerCoords.latitude) / 2,
+        longitude:
+          (trackingDriverCoords.longitude + trackingPassengerCoords.longitude) / 2,
+        latitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.latitude - trackingPassengerCoords.latitude) * 1.8,
+          0.02
+        ),
+        longitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.longitude - trackingPassengerCoords.longitude) * 1.8,
+          0.02
+        ),
+      };
+    }
+
+    if (trackingDriverCoords && activePickupCoords) {
+      return {
+        latitude: (trackingDriverCoords.latitude + activePickupCoords.latitude) / 2,
+        longitude: (trackingDriverCoords.longitude + activePickupCoords.longitude) / 2,
+        latitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.latitude - activePickupCoords.latitude) * 1.8,
+          0.02
+        ),
+        longitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.longitude - activePickupCoords.longitude) * 1.8,
+          0.02
+        ),
+      };
+    }
+
+    if (trackingDriverCoords && activeDestinationCoords) {
+      return {
+        latitude:
+          (trackingDriverCoords.latitude + activeDestinationCoords.latitude) / 2,
+        longitude:
+          (trackingDriverCoords.longitude + activeDestinationCoords.longitude) / 2,
+        latitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.latitude - activeDestinationCoords.latitude) * 1.8,
+          0.02
+        ),
+        longitudeDelta: Math.max(
+          Math.abs(trackingDriverCoords.longitude - activeDestinationCoords.longitude) * 1.8,
+          0.02
+        ),
+      };
+    }
+
+    if (activePickupCoords && activeDestinationCoords) {
+      return {
+        latitude: (activePickupCoords.latitude + activeDestinationCoords.latitude) / 2,
+        longitude: (activePickupCoords.longitude + activeDestinationCoords.longitude) / 2,
+        latitudeDelta: Math.max(
+          Math.abs(activePickupCoords.latitude - activeDestinationCoords.latitude) * 1.8,
+          0.02
+        ),
+        longitudeDelta: Math.max(
+          Math.abs(activePickupCoords.longitude - activeDestinationCoords.longitude) * 1.8,
+          0.02
+        ),
+      };
+    }
+
     if (pickupCoords && destinationCoords) {
       return {
         latitude: (pickupCoords.latitude + destinationCoords.latitude) / 2,
@@ -129,7 +229,7 @@ export function usePassengerScreen() {
     }
 
     return INITIAL_REGION;
-  }, [pickupCoords, destinationCoords]);
+  }, [pickupCoords, destinationCoords, trackingSnapshot, currentRide]);
 
   const rideSummary = useMemo(
     () => ({
@@ -157,6 +257,7 @@ export function usePassengerScreen() {
 
     if (!currentRide) return 'planning';
 
+    if (isCancelledRideStatus(currentRide.status)) return 'planning';
     if (currentRide.status === 'Completed') return 'completed';
     if (currentRide.status === 'PickedUp') return 'in_progress';
     if (currentRide.status === 'OnTheWay') return 'driver_arriving';
@@ -519,6 +620,43 @@ export function usePassengerScreen() {
     }
   };
 
+  const handleCancelRide = async (reason: string, note = '') => {
+    if (!passengerId) {
+      Alert.alert('Error', 'Please login again.');
+      return false;
+    }
+
+    const rideId = currentRide?.id ?? orderPlacedRide?.rideId;
+    if (!rideId) {
+      Alert.alert('Error', 'No cancellable ride was found.');
+      return false;
+    }
+
+    try {
+      setIsCancellingRide(true);
+      const data = await cancelPassengerRide({
+        rideId,
+        passengerId,
+        reason,
+        note,
+      });
+
+      setMessage(typeof data === 'string' ? data : 'Ride cancelled successfully.');
+      setCurrentRide(null);
+      setOrderPlacedRide(null);
+      setTrackingSnapshot(null);
+      setTrackingUnavailable(false);
+      return true;
+    } catch (error: any) {
+      const msg = error?.response?.data || 'Failed to cancel ride.';
+      setMessage(msg);
+      Alert.alert('Cancellation Failed', msg);
+      return false;
+    } finally {
+      setIsCancellingRide(false);
+    }
+  };
+
   useEffect(() => {
     loadUser();
   }, []);
@@ -547,7 +685,7 @@ export function usePassengerScreen() {
     if (!passengerId || !currentRide?.id) return;
     if (
       currentRide.status === 'Completed' ||
-      currentRide.status === 'Cancelled'
+      isCancelledRideStatus(currentRide.status)
     ) {
       return;
     }
@@ -564,6 +702,35 @@ export function usePassengerScreen() {
 
     handleGetPendingFeedbackRide();
   }, [currentRide?.status, passengerId]);
+
+  useEffect(() => {
+    if (!currentRide || currentRide.status === 'Pending') return;
+
+    setOrderPlacedRide((existingRide) => {
+      if (!existingRide) return null;
+      return existingRide.rideId === currentRide.id ? null : existingRide;
+    });
+  }, [currentRide]);
+
+  useEffect(() => {
+    const previousStatus = previousRideStatusRef.current;
+    const nextStatus = currentRide?.status ?? null;
+
+    if (
+      previousStatus &&
+      (previousStatus === 'Accepted' || previousStatus === 'OnTheWay') &&
+      nextStatus === 'Pending'
+    ) {
+      setMessage('Your previous driver cancelled the ride. We are matching you with another driver now.');
+      setIsSearchingDriver(true);
+    }
+
+    if (nextStatus === 'Accepted' || nextStatus === 'OnTheWay' || nextStatus === 'PickedUp') {
+      setIsSearchingDriver(false);
+    }
+
+    previousRideStatusRef.current = nextStatus;
+  }, [currentRide?.status]);
 
   useLiveLocation({
     enabled: shouldTrackPassengerLocation,
@@ -627,6 +794,7 @@ export function usePassengerScreen() {
     isRefreshingRide,
     isRefreshingTracking,
     isSubmittingFeedback,
+    isCancellingRide,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -650,5 +818,6 @@ export function usePassengerScreen() {
     handleCreateRide,
     handleDismissOrderPlaced,
     handleSubmitFeedback,
+    handleCancelRide,
   };
 }

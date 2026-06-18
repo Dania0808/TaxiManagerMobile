@@ -51,13 +51,13 @@ export default function PassengerBottomSheet({
         <View style={styles.bottomSheetHeader}>
           <TouchableOpacity style={styles.bottomSheetBackAction} onPress={onBack}>
             <MaterialCommunityIcons name="arrow-left" size={18} color="#111827" />
-            <Text style={styles.bottomSheetBackActionText}>Edit Details</Text>
+            <Text style={styles.bottomSheetBackActionText}>Edit ride</Text>
           </TouchableOpacity>
 
           <View style={styles.bottomSheetTitleWrap}>
-            <Text style={styles.bottomTitle}>Review Your Ride</Text>
+            <Text style={styles.bottomTitle}>Confirm Your Ride</Text>
             <Text style={styles.bottomSheetSubtitle}>
-              Check everything before sending your request to nearby drivers.
+              A last quick look before we send your request.
             </Text>
           </View>
         </View>
@@ -68,10 +68,9 @@ export default function PassengerBottomSheet({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.bottomSummaryBanner}>
-            <Text style={styles.bottomSummaryTitle}>Nothing is lost if you go back</Text>
+            <Text style={styles.bottomSummaryTitle}>Route ready</Text>
             <Text style={styles.bottomSummaryText}>
-              You can return to the form, adjust any field, and come back here with your
-              entered details still saved.
+              You can still go back and change the trip before ordering.
             </Text>
           </View>
 
@@ -144,19 +143,19 @@ export default function PassengerBottomSheet({
         </ScrollView>
 
         <View style={styles.bottomFooter}>
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-              styles.bottomPrimaryAction,
-              isSubmitting && styles.primaryButtonDisabled,
-            ]}
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                styles.bottomPrimaryAction,
+                isSubmitting && styles.primaryButtonDisabled,
+              ]}
             onPress={onOrderNow}
             disabled={isSubmitting}
-          >
-            <Text style={styles.primaryButtonText}>
-              {isSubmitting ? 'Sending request...' : 'Confirm and Order'}
-            </Text>
-          </TouchableOpacity>
+            >
+              <Text style={styles.primaryButtonText}>
+              {isSubmitting ? 'Sending request...' : 'Order Taxi'}
+              </Text>
+            </TouchableOpacity>
         </View>
       </View>
     </View>

@@ -17,12 +17,15 @@ import OrderPlacedCard from '../../src/components/passenger/OrderPlacedCard';
 import PassengerBottomSheet from '../../src/components/passenger/PassengerBottomSheet';
 import PassengerMapCard from '../../src/components/passenger/PassengerMapCard';
 import RideDetailsCard from '../../src/components/passenger/RideDetailsCard';
+import CancelRideModal from '../../src/components/shared/CancelRideModal';
 import { usePassengerScreen } from '../../src/hooks/usePassengerScreen';
 import { passengerStyles as styles } from '../../src/styles/passengerStyles';
+import { isCancelledRideStatus } from '../../src/types/passenger';
 
 export default function PassengerScreen() {
   const router = useRouter();
   const [isRideFormExpanded, setIsRideFormExpanded] = useState(true);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const {
     user,
     loadingUser,
@@ -44,11 +47,14 @@ export default function PassengerScreen() {
     coinBalance,
     currentRide,
     orderPlacedRide,
+    trackingSnapshot,
+    pendingFeedbackRide,
     passengerRidePhase,
     shouldShowBottomSheet,
     isSearchingDriver,
     isCreatingRide,
     isRefreshingRide,
+    isCancellingRide,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -63,6 +69,7 @@ export default function PassengerScreen() {
     setIsShared,
     handleCreateRide,
     handleGetCurrentRide,
+    handleCancelRide,
   } = usePassengerScreen();
 
   if (notLoggedIn) {
@@ -82,10 +89,45 @@ export default function PassengerScreen() {
     ? `passenger_profile_image_url_${user.passengerId}`
     : undefined;
   const hasCompletedRide = currentRide?.status === 'Completed';
+  const shouldShowFeedbackPrompt = hasCompletedRide && !!pendingFeedbackRide;
   const shouldShowCurrentRideCard =
-    !!currentRide && currentRide.status !== 'Pending' && currentRide.status !== 'Completed';
+    !!currentRide &&
+    currentRide.status !== 'Pending' &&
+    currentRide.status !== 'Completed' &&
+    !isCancelledRideStatus(currentRide.status);
   const shouldShowOrderPlacedCard =
-    (!!orderPlacedRide || currentRide?.status === 'Pending') && !shouldShowCurrentRideCard;
+    (currentRide?.status === 'Pending' || orderPlacedRide?.status === 'Pending') &&
+    !shouldShowCurrentRideCard &&
+    !shouldShowFeedbackPrompt;
+  const isLiveRidePhase =
+    currentRide?.status === 'Accepted' ||
+    currentRide?.status === 'OnTheWay' ||
+    currentRide?.status === 'PickedUp';
+  const passengerCancelReasons =
+    currentRide?.status === 'Accepted' || currentRide?.status === 'OnTheWay'
+      ? [
+          'Changed my mind',
+          'Driver taking too long',
+          'Booked by mistake',
+          'Found another ride',
+        ]
+      : ['Changed my mind', 'Booked by mistake', 'Found another ride'];
+  const isPlanningState =
+    !shouldShowOrderPlacedCard && !shouldShowFeedbackPrompt && !currentRide;
+  const pendingRideSummary =
+    orderPlacedRide?.rideSummary ??
+    (currentRide
+      ? {
+          from: currentRide.pickupLocation || 'Not set',
+          to: currentRide.destination || 'Not set',
+          rideType:
+            currentRide.rideType === 'Scheduled' ? 'Scheduled' : 'Immediate',
+          passengers: '1',
+          luggage: '0',
+          shared: currentRide.isShared ? 'Yes' : 'No',
+          scheduledTime: '-',
+        }
+      : rideSummary);
 
   return (
     <View style={styles.screen}>
@@ -122,7 +164,7 @@ export default function PassengerScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.mapSection}>
+        <View style={[styles.mapSection, isPlanningState && styles.mapSectionPlanning]}>
           <PassengerMapCard
             mapRegion={mapRegion}
             pickupCoords={pickupCoords}
@@ -130,26 +172,92 @@ export default function PassengerScreen() {
             pickupLocation={pickupLocation}
             destination={destination}
             currentRide={currentRide}
+            trackingSnapshot={trackingSnapshot}
           />
         </View>
 
         {shouldShowOrderPlacedCard ? (
           <View style={styles.sectionSpacing}>
             <OrderPlacedCard
-              rideSummary={orderPlacedRide?.rideSummary || rideSummary}
+              rideSummary={pendingRideSummary}
               rideId={orderPlacedRide?.rideId || currentRide?.id}
               status={orderPlacedRide?.status || currentRide?.status}
               onRefreshRideStatus={handleGetCurrentRide}
-              onTrackRide={() => router.push('/(main)/passenger-tracking')}
+              onTrackRide={
+                currentRide?.status === 'Accepted'
+                  ? () => router.push('/(main)/passenger-tracking')
+                  : undefined
+              }
+              onCancelRide={() => setIsCancelModalOpen(true)}
+              isCancelling={isCancellingRide}
             />
+          </View>
+        ) : shouldShowFeedbackPrompt ? (
+          <View style={styles.sectionSpacing}>
+            <View style={styles.feedbackHeroCard}>
+              <View style={styles.feedbackHeroIconWrap}>
+                <MaterialCommunityIcons
+                  name="star-circle-outline"
+                  size={28}
+                  color="#ca8a04"
+                />
+              </View>
+              <Text style={styles.feedbackHeroTitle}>Rate Your Ride</Text>
+              <Text style={styles.feedbackHeroSubtitle}>
+                Your trip is complete. Leave quick feedback now and earn coins for your next rides.
+              </Text>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Completed Ride Ready For Review</Text>
+              <Text style={styles.helperText}>
+                Review the finished trip and share a short rating for your driver.
+              </Text>
+
+              <View style={styles.feedbackTripSummary}>
+                <Text style={styles.feedbackTripRowLabel}>
+                  Ride #{pendingFeedbackRide.id}
+                </Text>
+                <Text style={styles.feedbackTripRowValue}>
+                  {pendingFeedbackRide.pickupLocation || 'Unknown pickup'}
+                </Text>
+                <Text style={styles.feedbackTripRowArrow}>to</Text>
+                <Text style={styles.feedbackTripRowValue}>
+                  {pendingFeedbackRide.destination || 'Unknown destination'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => router.push('/(main)/passenger-feedback')}
+              >
+                <Text style={styles.primaryButtonText}>Rate This Ride</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : currentRide && !hasCompletedRide ? (
           <View style={styles.sectionSpacing}>
+            {isLiveRidePhase ? (
+              <View style={styles.liveRideHomeBanner}>
+                <View style={styles.liveRideHomeBannerIconWrap}>
+                  <MaterialCommunityIcons name="map-clock-outline" size={18} color="#111827" />
+                </View>
+                <View style={styles.liveRideHomeBannerTextWrap}>
+                  <Text style={styles.liveRideHomeBannerTitle}>Live ride in progress</Text>
+                  <Text style={styles.liveRideHomeBannerText}>
+                    This home screen now shows a summary. Open live tracking for the full map experience and live movement.
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             <CurrentRideCard
               currentRide={currentRide}
               onRefreshRideStatus={handleGetCurrentRide}
               isRefreshing={isRefreshingRide}
-              onTrackRide={() => router.push('/(main)/passenger-tracking')}
+              onCancelRide={
+                currentRide?.status === 'PickedUp' ? undefined : () => setIsCancelModalOpen(true)
+              }
+              isCancelling={isCancellingRide}
             />
           </View>
         ) : (
@@ -159,28 +267,6 @@ export default function PassengerScreen() {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 0}
           >
             <View style={styles.rideComposerCard}>
-              <TouchableOpacity
-                style={styles.floatingFormHeader}
-                activeOpacity={0.9}
-                onPress={() => setIsRideFormExpanded((value) => !value)}
-              >
-                <View style={styles.floatingHeaderRow}>
-                  <View style={styles.rideComposerTextWrap}>
-                    <Text style={styles.floatingFormTitle}>Ride Details</Text>
-                    <Text style={styles.floatingFormSubtitle}>
-                      {pickupLocation || destination
-                        ? 'Your draft is saved here. Tap to continue editing.'
-                        : 'Add your pickup, destination, and trip preferences to continue.'}
-                    </Text>
-                  </View>
-                  <MaterialCommunityIcons
-                    name={isRideFormExpanded ? 'chevron-down' : 'chevron-up'}
-                    size={24}
-                    color="#111827"
-                  />
-                </View>
-              </TouchableOpacity>
-
               {isRideFormExpanded ? (
                 <RideDetailsCard
                   pickupLocation={pickupLocation}
@@ -247,6 +333,22 @@ export default function PassengerScreen() {
           isSubmitting={isCreatingRide}
         />
       )}
+
+      <CancelRideModal
+        visible={isCancelModalOpen}
+        title="Cancel this ride?"
+        subtitle="You can cancel while the ride is pending or before pickup. Once the trip starts, cancellation is no longer available here."
+        confirmLabel="Confirm cancellation"
+        reasons={passengerCancelReasons}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={async (reason, note) => {
+          const success = await handleCancelRide(reason, note);
+          if (success) {
+            setIsCancelModalOpen(false);
+          }
+        }}
+        isSubmitting={isCancellingRide}
+      />
     </View>
   );
 }

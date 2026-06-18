@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  cancelRideAsManager,
   getAiActiveRides,
   getAiAvailableDrivers,
   getAiBestDriver,
@@ -63,6 +64,7 @@ export function useAiManagerScreen() {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [isRefreshingDashboard, setIsRefreshingDashboard] = useState(false);
   const [isAnalyzingRide, setIsAnalyzingRide] = useState(false);
+  const [cancellingRideId, setCancellingRideId] = useState<number | null>(null);
 
   const loadUser = async () => {
     try {
@@ -142,6 +144,35 @@ export function useAiManagerScreen() {
     }
   }, [rideId]);
 
+  const handleCancelRideAsManager = useCallback(
+    async (rideIdToCancel: number, reason: string, note = '') => {
+      if (!user?.id) {
+        setMessage('Manager account data is missing. Please login again.');
+        return false;
+      }
+
+      try {
+        setCancellingRideId(rideIdToCancel);
+        const data = await cancelRideAsManager({
+          rideId: rideIdToCancel,
+          managerId: user.id,
+          reason,
+          note,
+        });
+        setMessage(typeof data === 'string' ? data : 'Ride cancelled by manager.');
+        await handleRefreshDashboard();
+        return true;
+      } catch (error: any) {
+        const msg = error?.response?.data || 'Failed to cancel ride.';
+        setMessage(msg);
+        return false;
+      } finally {
+        setCancellingRideId(null);
+      }
+    },
+    [handleRefreshDashboard, user?.id]
+  );
+
   useEffect(() => {
     loadUser();
   }, []);
@@ -194,9 +225,11 @@ export function useAiManagerScreen() {
     lastUpdatedAt,
     isRefreshingDashboard,
     isAnalyzingRide,
+    cancellingRideId,
     longestWaitingRide,
     setRideId,
     handleRefreshDashboard,
     handleAnalyzeRide,
+    handleCancelRideAsManager,
   };
 }

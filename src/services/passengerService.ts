@@ -88,6 +88,22 @@ export async function getPassengerRideHistory(passengerId: number) {
   return response.data;
 }
 
+export async function cancelPassengerRide(payload: {
+  rideId: number;
+  passengerId: number;
+  reason: string;
+  note?: string;
+}) {
+  const response = await api.post('/Rides/cancel', {
+    rideId: payload.rideId,
+    actorRole: 'Passenger',
+    actorId: payload.passengerId,
+    reason: payload.reason,
+    note: payload.note,
+  });
+  return response.data;
+}
+
 export async function updatePassengerProfile(
   passengerId: number,
   payload: {

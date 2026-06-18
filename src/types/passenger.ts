@@ -19,7 +19,21 @@ export type RideStatus =
   | 'OnTheWay'
   | 'PickedUp'
   | 'Completed'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'CancelledByPassenger'
+  | 'CancelledByDriver'
+  | 'CancelledByManager';
+
+export const CANCELLED_RIDE_STATUSES: RideStatus[] = [
+  'Cancelled',
+  'CancelledByPassenger',
+  'CancelledByDriver',
+  'CancelledByManager',
+];
+
+export function isCancelledRideStatus(status?: string | null) {
+  return !!status && CANCELLED_RIDE_STATUSES.includes(status as RideStatus);
+}
 
 export type LatLng = {
   latitude: number;

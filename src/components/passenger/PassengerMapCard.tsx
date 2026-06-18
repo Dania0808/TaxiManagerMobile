@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
 import { CurrentRideType, LatLng } from '../../types/passenger';
+import { RideTrackingSnapshot } from '../../types/liveTracking';
 
 type PassengerMapCardProps = {
   mapRegion: Region;
@@ -11,7 +12,43 @@ type PassengerMapCardProps = {
   pickupLocation: string;
   destination: string;
   currentRide: CurrentRideType | null;
+  trackingSnapshot?: RideTrackingSnapshot | null;
 };
+
+function getActiveRideCopy(status?: string) {
+  if (status === 'Pending') {
+    return {
+      title: 'Finding your driver',
+      subtitle: 'We are matching your request with the best nearby driver.',
+    };
+  }
+
+  if (status === 'Accepted') {
+    return {
+      title: 'Driver assigned',
+      subtitle: 'Your ride is confirmed. The map will update as the trip goes live.',
+    };
+  }
+
+  if (status === 'OnTheWay') {
+    return {
+      title: 'Driver on the way',
+      subtitle: 'Your driver is moving toward pickup right now.',
+    };
+  }
+
+  if (status === 'PickedUp') {
+    return {
+      title: 'Trip in progress',
+      subtitle: 'You are on the way. Follow the route live on this screen.',
+    };
+  }
+
+  return {
+    title: 'Ride in progress',
+    subtitle: 'Your live ride details appear here.',
+  };
+}
 
 export default function PassengerMapCard({
   mapRegion,
@@ -20,43 +57,94 @@ export default function PassengerMapCard({
   pickupLocation,
   destination,
   currentRide,
+  trackingSnapshot,
 }: PassengerMapCardProps) {
-  const routeCoordinates =
-    pickupCoords && destinationCoords
-      ? [pickupCoords, destinationCoords]
-      : [];
   const hasActiveRide =
     !!currentRide &&
     currentRide.status !== 'Completed' &&
     currentRide.status !== 'Cancelled';
-  const overlayTitle = hasActiveRide ? 'Ride in progress' : 'Plan your route';
+  const livePickupCoords = trackingSnapshot?.pickupCoords ?? pickupCoords;
+  const liveDestinationCoords = trackingSnapshot?.destinationCoords ?? destinationCoords;
+  const driverCoords = trackingSnapshot?.driverLocation
+    ? {
+        latitude: trackingSnapshot.driverLocation.latitude,
+        longitude: trackingSnapshot.driverLocation.longitude,
+      }
+    : null;
+  const passengerCoords = trackingSnapshot?.passengerLocation
+    ? {
+        latitude: trackingSnapshot.passengerLocation.latitude,
+        longitude: trackingSnapshot.passengerLocation.longitude,
+      }
+    : null;
+  const routeCoordinates =
+    hasActiveRide && driverCoords
+      ? currentRide?.status === 'PickedUp' && liveDestinationCoords
+        ? [driverCoords, liveDestinationCoords]
+        : livePickupCoords
+          ? [driverCoords, livePickupCoords]
+          : []
+      : livePickupCoords && liveDestinationCoords
+        ? [livePickupCoords, liveDestinationCoords]
+        : [];
+  const activeRideCopy = getActiveRideCopy(currentRide?.status);
+  const overlayTitle = hasActiveRide ? activeRideCopy.title : 'Plan your route';
   const overlayIcon = hasActiveRide ? 'car-connected' : 'map-marker-path';
+  const overlayBadge = hasActiveRide
+    ? currentRide?.status === 'PickedUp'
+      ? 'On trip'
+      : currentRide?.status === 'OnTheWay'
+        ? 'Driver coming'
+        : currentRide?.status === 'Accepted'
+          ? 'Driver found'
+          : 'Live'
+    : livePickupCoords && liveDestinationCoords
+      ? 'Route ready'
+      : 'Start here';
   const overlaySubtitle = hasActiveRide
-    ? 'We will show live tracking here when driver updates are available.'
-    : pickupCoords && destinationCoords
-      ? 'Your pickup and destination are pinned. Review the route before booking.'
-      : 'Choose your pickup and destination to preview the ride path.';
+    ? activeRideCopy.subtitle
+    : livePickupCoords && liveDestinationCoords
+      ? 'Pickup and destination are pinned on the map.'
+      : 'Choose where you want to be picked up and where you are going.';
 
   return (
     <View style={styles.mapHeroCard}>
       <MapView style={styles.mapHero} region={mapRegion}>
-        {pickupCoords && (
+        {livePickupCoords && (
           <Marker
-            coordinate={pickupCoords}
+            coordinate={livePickupCoords}
             title="Pickup"
             description={pickupLocation}
             pinColor="green"
           />
         )}
 
-        {destinationCoords && (
+        {liveDestinationCoords && (
           <Marker
-            coordinate={destinationCoords}
+            coordinate={liveDestinationCoords}
             title="Destination"
             description={destination}
             pinColor="red"
           />
         )}
+
+        {passengerCoords && hasActiveRide ? (
+          <Marker
+            coordinate={passengerCoords}
+            title="You"
+            description="Passenger live location"
+            pinColor="orange"
+          />
+        ) : null}
+
+        {driverCoords && hasActiveRide ? (
+          <Marker
+            coordinate={driverCoords}
+            title={trackingSnapshot?.driverName || 'Driver'}
+            description="Driver live location"
+            pinColor="blue"
+          />
+        ) : null}
 
         {routeCoordinates.length === 2 && (
           <Polyline
@@ -69,18 +157,49 @@ export default function PassengerMapCard({
       </MapView>
 
       <View style={styles.mapOverlayInfo}>
-        <View style={styles.mapOverlayHeader}>
-          <View style={styles.mapOverlayIconWrap}>
-            <MaterialCommunityIcons
-              name={overlayIcon}
-              size={18}
-              color="#111827"
-            />
+        <View style={styles.mapOverlayTopRow}>
+          <View style={styles.mapOverlayHeader}>
+            <View style={styles.mapOverlayIconWrap}>
+              <MaterialCommunityIcons
+                name={overlayIcon}
+                size={18}
+                color="#111827"
+              />
+            </View>
+            <Text style={styles.mapOverlayTitle}>{overlayTitle}</Text>
           </View>
-          <Text style={styles.mapOverlayTitle}>{overlayTitle}</Text>
+          <View style={styles.mapOverlayBadge}>
+            <Text style={styles.mapOverlayBadgeText}>{overlayBadge}</Text>
+          </View>
         </View>
 
         <Text style={styles.mapOverlaySubtitle}>{overlaySubtitle}</Text>
+        <View style={styles.mapOverlayMetaRow}>
+          {hasActiveRide && currentRide?.driverId ? (
+            <>
+              <View style={styles.mapOverlayMetaPill}>
+                <Text style={styles.mapOverlayMetaText}>
+                  {trackingSnapshot?.driverName || currentRide.driverName || 'Driver assigned'}
+                </Text>
+              </View>
+              <View style={styles.mapOverlayMetaPill}>
+                <Text style={styles.mapOverlayMetaText}>
+                  {currentRide.status === 'PickedUp' ? 'Destination route' : 'Pickup route'}
+                </Text>
+              </View>
+            </>
+          ) : null}
+          {!hasActiveRide && livePickupCoords ? (
+            <View style={styles.mapOverlayMetaPill}>
+              <Text style={styles.mapOverlayMetaText}>Pickup pinned</Text>
+            </View>
+          ) : null}
+          {!hasActiveRide && liveDestinationCoords ? (
+            <View style={styles.mapOverlayMetaPill}>
+              <Text style={styles.mapOverlayMetaText}>Destination pinned</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );

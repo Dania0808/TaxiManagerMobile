@@ -1,4 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import AppNavbar from '../../src/components/AppNavbar';
+import CancelRideModal from '../../src/components/shared/CancelRideModal';
 import { useAiManagerScreen } from '../../src/hooks/useAiManagerScreen';
 
 function formatWait(minutes: number | null | undefined) {
@@ -56,6 +58,7 @@ function formatRating(value: number | null | undefined) {
 
 export default function AiManagerScreen() {
   const router = useRouter();
+  const [selectedRideToCancel, setSelectedRideToCancel] = useState<number | null>(null);
   const {
     user,
     loadingUser,
@@ -70,10 +73,12 @@ export default function AiManagerScreen() {
     lastUpdatedAt,
     isRefreshingDashboard,
     isAnalyzingRide,
+    cancellingRideId,
     longestWaitingRide,
     setRideId,
     handleRefreshDashboard,
     handleAnalyzeRide,
+    handleCancelRideAsManager,
   } = useAiManagerScreen();
 
   if (notLoggedIn) {
@@ -309,6 +314,19 @@ export default function AiManagerScreen() {
                   <Text style={styles.metaPillText}>{formatWait(ride.waitMinutes)}</Text>
                 </View>
               </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.dangerButton,
+                  cancellingRideId === ride.id && styles.primaryButtonDisabled,
+                ]}
+                onPress={() => setSelectedRideToCancel(ride.id)}
+                disabled={cancellingRideId === ride.id}
+              >
+                <Text style={styles.dangerButtonText}>
+                  {cancellingRideId === ride.id ? 'Cancelling...' : 'Cancel Ride'}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
@@ -414,6 +432,21 @@ export default function AiManagerScreen() {
               <Text style={styles.itemText}>
                 Explanation: {recommendation.explanation || 'No extended explanation returned yet'}
               </Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.dangerButton,
+                  cancellingRideId === recommendation.rideId && styles.primaryButtonDisabled,
+                ]}
+                onPress={() => setSelectedRideToCancel(recommendation.rideId)}
+                disabled={cancellingRideId === recommendation.rideId}
+              >
+                <Text style={styles.dangerButtonText}>
+                  {cancellingRideId === recommendation.rideId
+                    ? 'Cancelling...'
+                    : 'Cancel Ride'}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
@@ -487,6 +520,33 @@ export default function AiManagerScreen() {
           ) : null}
         </View>
       </ScrollView>
+
+      <CancelRideModal
+        visible={selectedRideToCancel != null}
+        title="Manager cancel ride?"
+        subtitle="Manager cancellation overrides the normal ride flow. Use this for safety, ops, or service recovery cases."
+        confirmLabel="Cancel as manager"
+        reasons={[
+          'Safety or service issue',
+          'Passenger request confirmed by support',
+          'Driver unavailable',
+          'Dispatch correction needed',
+        ]}
+        allowNote
+        onClose={() => setSelectedRideToCancel(null)}
+        onConfirm={async (reason, note) => {
+          if (selectedRideToCancel == null) return;
+          const success = await handleCancelRideAsManager(
+            selectedRideToCancel,
+            reason,
+            note
+          );
+          if (success) {
+            setSelectedRideToCancel(null);
+          }
+        }}
+        isSubmitting={selectedRideToCancel != null && cancellingRideId === selectedRideToCancel}
+      />
     </View>
   );
 }
@@ -796,5 +856,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontWeight: '600',
+  },
+  dangerButton: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    backgroundColor: '#fff7f7',
+    borderRadius: 14,
+    alignItems: 'center',
+    paddingVertical: 13,
+  },
+  dangerButtonText: {
+    color: '#991b1b',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

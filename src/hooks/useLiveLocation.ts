@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { LatLng } from '../types/passenger';
 
 type NativeGeolocationCoordinates = {
@@ -21,6 +22,13 @@ type LiveLocationOptions = {
   intervalMs?: number;
 };
 
+const EILAT_COORDS = {
+  latitude: 29.5577,
+  longitude: 34.9519,
+};
+
+const FAKE_DRIVER_ID = 17;
+
 export function useLiveLocation({
   enabled,
   onLocation,
@@ -39,8 +47,57 @@ export function useLiveLocation({
 
     let isMounted = true;
     let subscription: Location.LocationSubscription | null = null;
+    let fakeLocationInterval: ReturnType<typeof setInterval> | null = null;
 
     const startWatching = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        const isFakeDriver =
+          parsedUser?.role === 'Driver' && parsedUser?.driverId === FAKE_DRIVER_ID;
+
+        if (isFakeDriver) {
+          setCurrentCoords(EILAT_COORDS);
+          setLocationError('');
+
+          const emitFakeLocation = async () => {
+            if (!isMounted) return;
+
+            const now = Date.now();
+            setCurrentCoords(EILAT_COORDS);
+
+            if (now - lastSentAtRef.current < intervalMs) {
+              return;
+            }
+
+            lastSentAtRef.current = now;
+            await onLocation({
+              coords: {
+                latitude: EILAT_COORDS.latitude,
+                longitude: EILAT_COORDS.longitude,
+                heading: null,
+                speed: 0,
+                accuracy: 1,
+              },
+            });
+          };
+
+          await emitFakeLocation();
+          fakeLocationInterval = setInterval(() => {
+            emitFakeLocation().catch((error: any) => {
+              if (!isMounted) return;
+              setLocationError(error?.message || 'Failed to set fake location.');
+            });
+          }, intervalMs);
+
+          return;
+        }
+      } catch (error: any) {
+        if (!isMounted) return;
+        setLocationError(error?.message || 'Failed to load user for location.');
+        return;
+      }
+
       const permission = await Location.requestForegroundPermissionsAsync();
 
       if (!isMounted) return;
@@ -95,6 +152,9 @@ export function useLiveLocation({
 
     return () => {
       isMounted = false;
+      if (fakeLocationInterval) {
+        clearInterval(fakeLocationInterval);
+      }
       subscription?.remove();
     };
   }, [distanceFilter, enabled, intervalMs, onLocation]);

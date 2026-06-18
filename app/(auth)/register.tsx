@@ -13,6 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../src/services/api';
 
 const logoImage = require('../../assets/images/taxi-manager-logo.jpeg');
@@ -89,150 +90,156 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
       >
-        <View style={styles.topHalf}>
-          <View style={styles.heroCluster}>
-            <View style={styles.logoPlaceholder}>
-              <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
-            </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topHalf}>
+            <View style={styles.heroCluster}>
+              <View style={styles.logoPlaceholder}>
+                <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
+              </View>
 
-            <Text style={styles.heroTitle}>Create Account</Text>
-            <Text style={styles.heroSubtitle}>
-              Register as a passenger or driver and get started.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.bottomHalf}>
-          <View style={styles.formCard}>
-            <Text style={styles.title}>Register</Text>
-            <Text style={styles.subtitle}>
-              Fill in your details and choose your role.
-            </Text>
-
-            <View style={styles.helperCard}>
-              <Text style={styles.helperTitle}>Choose the role you will use most</Text>
-              <Text style={styles.helperText}>
-                Passengers request rides and track drivers. Drivers receive nearby trips and manage active rides.
+              <Text style={styles.heroTitle}>Create Account</Text>
+              <Text style={styles.heroSubtitle}>
+                Register as a passenger or driver and get started.
               </Text>
             </View>
+          </View>
 
-            {message ? (
-              <View
-                style={[
-                  styles.messageCard,
-                  messageType === 'error'
-                    ? styles.messageCardError
-                    : messageType === 'success'
-                      ? styles.messageCardSuccess
-                      : styles.messageCardInfo,
-                ]}
-              >
-                <Text style={styles.message}>{message}</Text>
+          <View style={styles.bottomHalf}>
+            <View style={styles.formCard}>
+              <Text style={styles.title}>Register</Text>
+              <Text style={styles.subtitle}>
+                Fill in your details and choose your role.
+              </Text>
+
+              <View style={styles.helperCard}>
+                <Text style={styles.helperTitle}>Choose the role you will use most</Text>
+                <Text style={styles.helperText}>
+                  Passengers request rides and track drivers. Drivers receive nearby trips and manage active rides.
+                </Text>
               </View>
-            ) : null}
 
-            <TextInput
-              placeholder="Full Name"
-              placeholderTextColor="#9ca3af"
-              value={fullName}
-              onChangeText={setFullName}
-              style={styles.input}
-              returnKeyType="next"
-            />
-
-            <TextInput
-              placeholder="Email"
-              placeholderTextColor="#9ca3af"
-              value={email}
-              onChangeText={setEmail}
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              returnKeyType="next"
-            />
-
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor="#9ca3af"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              style={styles.input}
-              returnKeyType="done"
-              onSubmitEditing={handleRegister}
-            />
-
-            <Text style={styles.roleLabel}>Choose Role</Text>
-
-            <View style={styles.roleContainer}>
-              <Pressable
-                style={[
-                  styles.roleButton,
-                  role === 'Passenger' && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole('Passenger')}
-              >
-                <Text
+              {message ? (
+                <View
                   style={[
-                    styles.roleButtonText,
-                    role === 'Passenger' && styles.roleButtonTextActive,
+                    styles.messageCard,
+                    messageType === 'error'
+                      ? styles.messageCardError
+                      : messageType === 'success'
+                        ? styles.messageCardSuccess
+                        : styles.messageCardInfo,
                   ]}
                 >
-                  Passenger
-                </Text>
-              </Pressable>
+                  <Text style={styles.message}>{message}</Text>
+                </View>
+              ) : null}
+
+              <TextInput
+                placeholder="Full Name"
+                placeholderTextColor="#9ca3af"
+                value={fullName}
+                onChangeText={setFullName}
+                style={styles.input}
+                returnKeyType="next"
+              />
+
+              <TextInput
+                placeholder="Email"
+                placeholderTextColor="#9ca3af"
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#9ca3af"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+                returnKeyType="done"
+                onSubmitEditing={handleRegister}
+              />
+
+              <Text style={styles.roleLabel}>Choose Role</Text>
+
+              <View style={styles.roleContainer}>
+                <Pressable
+                  style={[
+                    styles.roleButton,
+                    role === 'Passenger' && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setRole('Passenger')}
+                >
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      role === 'Passenger' && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Passenger
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.roleButton,
+                    role === 'Driver' && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setRole('Driver')}
+                >
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      role === 'Driver' && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Driver
+                  </Text>
+                </Pressable>
+              </View>
+
+              {loading ? (
+                <ActivityIndicator size="large" color="#111827" style={styles.loader} />
+              ) : (
+                <Pressable style={styles.primaryButton} onPress={handleRegister}>
+                  <Text style={styles.primaryButtonText}>Register</Text>
+                </Pressable>
+              )}
 
               <Pressable
-                style={[
-                  styles.roleButton,
-                  role === 'Driver' && styles.roleButtonActive,
-                ]}
-                onPress={() => setRole('Driver')}
+                style={styles.secondaryAction}
+                onPress={() => router.replace('/')}
+                disabled={loading}
               >
-                <Text
-                  style={[
-                    styles.roleButtonText,
-                    role === 'Driver' && styles.roleButtonTextActive,
-                  ]}
-                >
-                  Driver
-                </Text>
+                <Text style={styles.secondaryActionText}>Back to Login</Text>
               </Pressable>
             </View>
-
-            {loading ? (
-              <ActivityIndicator size="large" color="#111827" style={styles.loader} />
-            ) : (
-              <Pressable style={styles.primaryButton} onPress={handleRegister}>
-                <Text style={styles.primaryButtonText}>Register</Text>
-              </Pressable>
-            )}
-
-            <Pressable
-              style={styles.secondaryAction}
-              onPress={() => router.replace('/')}
-              disabled={loading}
-            >
-              <Text style={styles.secondaryActionText}>Back to Login</Text>
-            </Pressable>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#e5e7eb',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',

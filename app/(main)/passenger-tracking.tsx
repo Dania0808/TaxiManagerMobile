@@ -6,6 +6,45 @@ import AppNavbar from '../../src/components/AppNavbar';
 import { usePassengerScreen } from '../../src/hooks/usePassengerScreen';
 import { passengerStyles as styles } from '../../src/styles/passengerStyles';
 
+function getTrackingHeroCopy(status?: string) {
+  if (status === 'Accepted') {
+    return {
+      title: 'Driver assigned',
+      subtitle:
+        'Your ride is now live. Follow the driver on the map and prepare for pickup.',
+    };
+  }
+
+  if (status === 'OnTheWay') {
+    return {
+      title: 'Driver heading to pickup',
+      subtitle:
+        'Watch the live map and stay ready at your pickup point in case the driver calls or messages.',
+    };
+  }
+
+  if (status === 'PickedUp') {
+    return {
+      title: 'Trip in progress',
+      subtitle:
+        'You are on the way now. Keep this screen open if you want the clearest live map view until arrival.',
+    };
+  }
+
+  if (status === 'Completed') {
+    return {
+      title: 'Ride completed',
+      subtitle:
+        'Your trip has ended. Review the final ride details below and continue to feedback when you are ready.',
+    };
+  }
+
+  return {
+    title: 'Ride tracking',
+    subtitle: 'This screen becomes the main live-ride experience once a driver is assigned.',
+  };
+}
+
 export default function PassengerTrackingScreen() {
   const router = useRouter();
   const {
@@ -91,12 +130,35 @@ export default function PassengerTrackingScreen() {
 
     return 'Track Your Driver';
   }, [currentRide?.status]);
+  const trackingHeroCopy = getTrackingHeroCopy(currentRide?.status);
 
   return (
     <View style={styles.screen}>
-      <AppNavbar fullName={user?.fullName} />
+      <AppNavbar
+        fullName={user?.fullName}
+        profileRoute="/(main)/passenger-profile"
+        profileImageStorageKey={
+          user?.passengerId ? `passenger_profile_image_url_${user.passengerId}` : undefined
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.replace('/(main)/passenger')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.backButtonText}>Back to Ride Summary</Text>
+        </TouchableOpacity>
+
+        <View style={styles.liveTrackingHeroCard}>
+          <View style={styles.liveTrackingHeroIconWrap}>
+            <Text style={styles.liveTrackingHeroIcon}>LIVE</Text>
+          </View>
+          <Text style={styles.liveTrackingHeroTitle}>{trackingHeroCopy.title}</Text>
+          <Text style={styles.liveTrackingHeroSubtitle}>{trackingHeroCopy.subtitle}</Text>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{trackingTitle}</Text>
           <Text style={styles.helperText}>
@@ -174,7 +236,7 @@ export default function PassengerTrackingScreen() {
               {currentRide?.status === 'Pending' &&
                 'Your request is waiting for a driver.'}
               {currentRide?.status === 'Accepted' &&
-                'A driver accepted your ride.'}
+                'A driver accepted your ride. Use this screen as your main live ride view.'}
               {currentRide?.status === 'OnTheWay' &&
                 'Your driver is heading to pickup.'}
               {currentRide?.status === 'PickedUp' &&
@@ -209,18 +271,24 @@ export default function PassengerTrackingScreen() {
             </Text>
           </View>
 
-          <View style={styles.orderButtonWrap}>
-            <Text style={styles.linkButton} onPress={handleGetCurrentRide}>
-              {isRefreshingRide ? 'Refreshing ride status...' : 'Refresh ride status'}
-            </Text>
-          </View>
+          <View style={styles.trackingActionsRow}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleGetCurrentRide}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {isRefreshingRide ? 'Refreshing Status...' : 'Refresh Status'}
+              </Text>
+            </TouchableOpacity>
 
-          <View style={styles.orderButtonWrap}>
-            <Text style={styles.linkButton} onPress={handleRefreshTrackingSnapshot}>
-              {isRefreshingTracking
-                ? 'Refreshing live locations...'
-                : 'Refresh live locations'}
-            </Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleRefreshTrackingSnapshot}
+            >
+              <Text style={styles.primaryButtonText}>
+                {isRefreshingTracking ? 'Refreshing Map...' : 'Refresh Live Map'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

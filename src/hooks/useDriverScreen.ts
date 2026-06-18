@@ -4,6 +4,7 @@ import { Alert, Linking } from 'react-native';
 import { useLiveLocation } from './useLiveLocation';
 import {
   acceptDriverOffer,
+  cancelDriverRide,
   claimOpenRideRequest,
   declineDriverOffer,
   getCurrentDriverOffer,
@@ -111,6 +112,8 @@ export function useDriverScreen() {
   const [activeOfferActionId, setActiveOfferActionId] = useState<number | null>(null);
   const [activeClaimRideId, setActiveClaimRideId] = useState<number | null>(null);
   const [isUpdatingRideStatus, setIsUpdatingRideStatus] = useState(false);
+  const [isCancellingRide, setIsCancellingRide] = useState(false);
+  const rideInactiveMessage = 'This ride is no longer active. It may have been cancelled.';
 
   const driverId = user?.driverId;
 
@@ -267,7 +270,11 @@ export function useDriverScreen() {
       setTrackingSnapshot(null);
       setTrackingUnavailable(false);
 
-      if (error?.response?.status !== 404) {
+      if (error?.response?.status === 404) {
+        if (currentRide?.id) {
+          setMessage(rideInactiveMessage);
+        }
+      } else {
         console.log(
           'CURRENT DRIVER RIDE ERROR:',
           error?.response?.data || error?.message
@@ -277,7 +284,7 @@ export function useDriverScreen() {
     } finally {
       setIsRefreshingRide(false);
     }
-  }, [driverId]);
+  }, [currentRide?.id, driverId]);
 
   const handleToggleOnlineStatus = useCallback(async () => {
     if (!driverId) {
@@ -410,14 +417,65 @@ export function useDriverScreen() {
       await handleGetCurrentRide();
       await handleGetOpenRideRequests();
     } catch (error: any) {
-      console.log('UPDATE STATUS ERROR:', error?.response?.data || error?.message);
-      const backendMessage = error?.response?.data || 'Failed to update ride status.';
+      const rawBackendMessage = error?.response?.data;
+      const backendMessage =
+        (typeof rawBackendMessage === 'string' && rawBackendMessage.trim()) ||
+        error?.message ||
+        `Failed to update ride status to ${newStatus}.`;
+      console.log('UPDATE STATUS ERROR:', {
+        statusCode: error?.response?.status,
+        responseData: rawBackendMessage,
+        message: error?.message,
+      });
       setMessage(backendMessage);
       Alert.alert('Update Failed', backendMessage);
     } finally {
       setIsUpdatingRideStatus(false);
     }
   };
+
+  const handleCancelCurrentRide = useCallback(
+    async (reason: string, note = '') => {
+      if (!driverId) {
+        setMessage('Driver ID not found. Please login again.');
+        return false;
+      }
+
+      if (!currentRide?.id) {
+        setMessage('No current ride to cancel.');
+        return false;
+      }
+
+      try {
+        setIsCancellingRide(true);
+        const responseMessage = await cancelDriverRide({
+          rideId: currentRide.id,
+          driverId,
+          reason,
+          note,
+        });
+
+        setMessage(
+          typeof responseMessage === 'string'
+            ? responseMessage
+            : 'Ride cancelled and returned to dispatch.'
+        );
+        setCurrentRide(null);
+        setTrackingSnapshot(null);
+        await handleGetCurrentOffer();
+        await handleGetOpenRideRequests();
+        return true;
+      } catch (error: any) {
+        const backendMessage = error?.response?.data || 'Failed to cancel ride.';
+        setMessage(backendMessage);
+        Alert.alert('Cancel Ride Failed', backendMessage);
+        return false;
+      } finally {
+        setIsCancellingRide(false);
+      }
+    },
+    [currentRide?.id, driverId, handleGetCurrentOffer, handleGetOpenRideRequests]
+  );
 
   const handleRefreshTracking = useCallback(async () => {
     if (!currentRide?.id) return;
@@ -504,12 +562,35 @@ export function useDriverScreen() {
   }, [currentRide?.id, trackingUnavailable, handleRefreshTracking]);
 
   useEffect(() => {
+    if (!driverId || !currentRide?.id) return;
+    if (currentRide.status === 'Completed') return;
+
+    const intervalId = setInterval(() => {
+      handleGetCurrentRide();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [currentRide?.id, currentRide?.status, driverId, handleGetCurrentRide]);
+
+  useEffect(() => {
     const intervalId = setInterval(() => {
       setTimeTick(Date.now());
     }, 1000);
 
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (message !== rideInactiveMessage) return;
+
+    const timeoutId = setTimeout(() => {
+      setMessage((currentMessage) =>
+        currentMessage === rideInactiveMessage ? '' : currentMessage
+      );
+    }, 180000);
+
+    return () => clearTimeout(timeoutId);
+  }, [message]);
 
   const { currentCoords, locationError } = useLiveLocation({
     enabled: shouldShareWaitingLocation || shouldShareActiveRideLocation,
@@ -622,6 +703,7 @@ export function useDriverScreen() {
     activeOfferActionId,
     activeClaimRideId,
     isUpdatingRideStatus,
+    isCancellingRide,
     handleAcceptRide,
     handleClaimOpenRideRequest,
     handleDeclineIncomingOffer,
@@ -631,5 +713,6 @@ export function useDriverScreen() {
     handleUpdateRideStatus,
     handleRefreshTracking,
     handleOpenExternalNavigation,
+    handleCancelCurrentRide,
   };
 }

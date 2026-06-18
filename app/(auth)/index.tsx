@@ -15,7 +15,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../src/services/api';
+import { registerPushNotificationsAsync } from '../../src/services/notificationService';
 
 const logoImage = require('../../assets/images/taxi-manager-logo.jpeg');
 
@@ -130,6 +132,12 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('token', user.token);
       }
 
+      try {
+        await registerPushNotificationsAsync();
+      } catch (pushError) {
+        console.log('PUSH REGISTRATION AFTER LOGIN ERROR:', pushError);
+      }
+
       console.log('Saved user:', user);
 
       setMessageType('success');
@@ -153,114 +161,120 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 18 : 0}
       >
-        <View style={styles.topHalf}>
-          <View style={styles.heroCluster}>
-            <View style={styles.logoPlaceholder}>
-              <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
-            </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topHalf}>
+            <View style={styles.heroCluster}>
+              <View style={styles.logoPlaceholder}>
+                <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
+              </View>
 
-            <Text style={styles.heroTitle}>Taxi Manager</Text>
-            <Text style={styles.heroSubtitle}>
-              Your daily rides, managed with clarity.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.bottomHalf}>
-          <View style={styles.formCard}>
-            <Text style={styles.title}>Login</Text>
-            <Text style={styles.subtitle}>
-              Sign in with your email and password.
-            </Text>
-
-            <View style={styles.helperCard}>
-              <Text style={styles.helperTitle}>Two roles, one login</Text>
-              <Text style={styles.helperText}>
-                Passengers book and track rides. Drivers go online and manage dispatch.
+              <Text style={styles.heroTitle}>Taxi Manager</Text>
+              <Text style={styles.heroSubtitle}>
+                Your daily rides, managed with clarity.
               </Text>
             </View>
+          </View>
 
-            {message ? (
-              <View
-                style={[
-                  styles.messageCard,
-                  messageType === 'error'
-                    ? styles.messageCardError
-                    : messageType === 'success'
-                      ? styles.messageCardSuccess
-                      : styles.messageCardInfo,
-                ]}
-              >
-                <Text style={styles.message}>{message}</Text>
+          <View style={styles.bottomHalf}>
+            <View style={styles.formCard}>
+              <Text style={styles.title}>Login</Text>
+              <Text style={styles.subtitle}>
+                Sign in with your email and password.
+              </Text>
+
+              <View style={styles.helperCard}>
+                <Text style={styles.helperTitle}>Two roles, one login</Text>
+                <Text style={styles.helperText}>
+                  Passengers book and track rides. Drivers go online and manage dispatch.
+                </Text>
               </View>
-            ) : null}
 
-            <TextInput
-              placeholder="Email"
-              placeholderTextColor="#9ca3af"
-              value={email}
-              onChangeText={setEmail}
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              returnKeyType="next"
-            />
+              {message ? (
+                <View
+                  style={[
+                    styles.messageCard,
+                    messageType === 'error'
+                      ? styles.messageCardError
+                      : messageType === 'success'
+                        ? styles.messageCardSuccess
+                        : styles.messageCardInfo,
+                  ]}
+                >
+                  <Text style={styles.message}>{message}</Text>
+                </View>
+              ) : null}
 
-            <View style={styles.passwordWrap}>
               <TextInput
-                placeholder="Password"
+                placeholder="Email"
                 placeholderTextColor="#9ca3af"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                style={styles.passwordInput}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
+                value={email}
+                onChangeText={setEmail}
+                style={styles.input}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
               />
-              <Pressable
-                style={styles.passwordToggle}
-                onPress={() => setShowPassword((v) => !v)}
-              >
-                <MaterialCommunityIcons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={18}
-                  color="#4b5563"
+
+              <View style={styles.passwordWrap}>
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor="#9ca3af"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.passwordInput}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
                 />
+                <Pressable
+                  style={styles.passwordToggle}
+                  onPress={() => setShowPassword((v) => !v)}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color="#4b5563"
+                  />
+                </Pressable>
+              </View>
+
+              {loading ? (
+                <ActivityIndicator size="large" color="#111827" style={styles.loader} />
+              ) : (
+                <Pressable style={styles.primaryButton} onPress={handleLogin}>
+                  <Text style={styles.primaryButtonText}>Login</Text>
+                </Pressable>
+              )}
+
+              <Pressable
+                style={styles.secondaryAction}
+                onPress={() => router.push('/register')}
+              >
+                <Text style={styles.secondaryActionText}>Create new account</Text>
               </Pressable>
             </View>
-
-            {loading ? (
-              <ActivityIndicator size="large" color="#111827" style={styles.loader} />
-            ) : (
-              <Pressable style={styles.primaryButton} onPress={handleLogin}>
-                <Text style={styles.primaryButtonText}>Login</Text>
-              </Pressable>
-            )}
-
-            <Pressable
-              style={styles.secondaryAction}
-              onPress={() => router.push('/register')}
-            >
-              <Text style={styles.secondaryActionText}>Create new account</Text>
-            </Pressable>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#e5e7eb',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',

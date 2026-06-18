@@ -3,12 +3,12 @@ import { StyleSheet } from 'react-native';
 export const passengerStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f8f7f3',
   },
 
   mainContent: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f8f7f3',
   },
 
   container: {
@@ -28,7 +28,7 @@ export const passengerStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f8f7f3',
   },
 
   mapContainer: {
@@ -49,6 +49,17 @@ export const passengerStyles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     backgroundColor: '#e5e7eb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+
+  mapSectionPlanning: {
+    height: 360,
   },
 
   sectionSpacing: {
@@ -121,6 +132,7 @@ export const passengerStyles = StyleSheet.create({
     marginBottom: 14,
   },
 
+
   rideComposerCard: {
     backgroundColor: '#ffffff',
     borderRadius: 28,
@@ -128,10 +140,10 @@ export const passengerStyles = StyleSheet.create({
     borderColor: '#e5e7eb',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
 
   rideComposerTextWrap: {
@@ -218,6 +230,15 @@ export const passengerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+  },
+
+  modalKeyboardWrap: {
+    width: '100%',
+  },
+
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
 
   modalCard: {
@@ -360,7 +381,7 @@ export const passengerStyles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#fef3c7',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -381,6 +402,99 @@ export const passengerStyles = StyleSheet.create({
     fontSize: 13,
     color: '#6b7280',
     marginBottom: 0,
+  },
+
+  bookingHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+
+  bookingHeroTextWrap: {
+    flex: 1,
+  },
+
+  bookingHeroTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+  },
+
+  bookingHeroSubtitle: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#6b7280',
+  },
+
+  bookingHeroBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+
+
+  routeBuilderCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 22,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+
+  routeInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 68,
+  },
+
+  routeInputDivider: {
+    height: 1,
+    backgroundColor: '#eceff3',
+    marginLeft: 20,
+  },
+
+  routeIconDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+
+  routeIconDotPickup: {
+    backgroundColor: '#16a34a',
+  },
+
+  routeIconDotDestination: {
+    backgroundColor: '#dc2626',
+  },
+
+  routeInputTextWrap: {
+    flex: 1,
+  },
+
+  routeInputLabel: {
+    color: '#9ca3af',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+
+  routeInput: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+    paddingVertical: 0,
   },
 
   fieldLabel: {
@@ -436,10 +550,17 @@ export const passengerStyles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 18,
-    backgroundColor: 'rgba(255,255,255,0.93)',
-    borderRadius: 20,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderRadius: 22,
+    paddingVertical: 14,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.88)',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
 
   mapOverlayHeader: {
@@ -447,11 +568,18 @@ export const passengerStyles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  mapOverlayTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+
   mapOverlayIconWrap: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#fef3c7',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -463,10 +591,49 @@ export const passengerStyles = StyleSheet.create({
     color: '#111827',
   },
 
+  mapOverlayBadge: {
+    borderRadius: 999,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  mapOverlayBadgeText: {
+    color: '#92400e',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+
   mapOverlaySubtitle: {
     marginTop: 8,
     fontSize: 12,
     color: '#4b5563',
+  },
+
+  mapOverlayMetaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+
+  mapOverlayMetaPill: {
+    borderRadius: 999,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  mapOverlayMetaText: {
+    color: '#111827',
+    fontSize: 11,
+    fontWeight: '700',
   },
 
   input: {
@@ -475,8 +642,8 @@ export const passengerStyles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#f9fafb',
+    borderRadius: 16,
+    backgroundColor: '#fbfbfa',
     color: '#111827',
   },
 
@@ -529,8 +696,8 @@ export const passengerStyles = StyleSheet.create({
 
   sectionLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontWeight: '700',
+    marginBottom: 8,
     color: '#111827',
   },
 
@@ -554,8 +721,8 @@ export const passengerStyles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: '#d1d5db',
-    backgroundColor: '#f9fafb',
-    borderRadius: 14,
+    backgroundColor: '#fbfbfa',
+    borderRadius: 16,
     paddingVertical: 13,
     alignItems: 'center',
   },
@@ -573,6 +740,83 @@ export const passengerStyles = StyleSheet.create({
 
   segmentButtonTextActive: {
     color: '#ffffff',
+  },
+
+  segmentButtonHint: {
+    marginTop: 4,
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  segmentButtonHintActive: {
+    color: '#e5e7eb',
+  },
+
+
+  tripOptionsCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 20,
+    backgroundColor: '#fbfbfa',
+    padding: 14,
+    marginTop: 4,
+  },
+
+  quickOptionGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  quickOptionTile: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+
+  quickOptionLabel: {
+    color: '#9ca3af',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+
+  quickOptionInput: {
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '800',
+    paddingVertical: 0,
+  },
+
+  sharedRideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+
+  sharedRideTextWrap: {
+    flex: 1,
+  },
+
+  sharedRideTitle: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+
+  sharedRideSubtitle: {
+    color: '#6b7280',
+    fontSize: 12,
+    lineHeight: 18,
   },
 
   sharedRow: {
@@ -609,7 +853,7 @@ export const passengerStyles = StyleSheet.create({
   primaryButton: {
     backgroundColor: '#111827',
     paddingVertical: 15,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
   },
 
@@ -623,9 +867,9 @@ export const passengerStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fbfbfa',
   },
 
   secondaryButtonText: {
@@ -644,10 +888,10 @@ export const passengerStyles = StyleSheet.create({
 
   statusBanner: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 16,
-    padding: 12,
-    backgroundColor: '#f9fafb',
+    borderColor: '#fde68a',
+    borderRadius: 18,
+    padding: 13,
+    backgroundColor: '#fff8db',
     marginBottom: 12,
   },
 
@@ -655,6 +899,38 @@ export const passengerStyles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 4,
     color: '#111827',
+  },
+
+  statusBannerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 4,
+  },
+
+  statusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#fffdf5',
+    borderWidth: 1,
+    borderColor: '#fcd34d',
+  },
+
+  statusBadgeText: {
+    color: '#111827',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  statusNextStepText: {
+    marginTop: 4,
+    color: '#1f2937',
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   driverCard: {
@@ -685,6 +961,26 @@ export const passengerStyles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 6,
     color: '#111827',
+  },
+
+  driverSupportPill: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+
+  driverSupportPillText: {
+    color: '#1e3a8a',
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   rideDetailsBox: {
@@ -749,12 +1045,17 @@ export const passengerStyles = StyleSheet.create({
 
   inlineBanner: {
     borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
     borderWidth: 1,
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
 
   infoBanner: {
@@ -791,9 +1092,9 @@ export const passengerStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
     marginBottom: 64,
   },
 
@@ -804,7 +1105,7 @@ export const passengerStyles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ecfdf5',
+    backgroundColor: '#fef3c7',
     marginBottom: 14,
   },
 
@@ -832,23 +1133,112 @@ export const passengerStyles = StyleSheet.create({
 
   orderPlacedBanner: {
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: '#fde68a',
     borderRadius: 14,
     padding: 12,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#fff8db',
     marginBottom: 14,
   },
 
   orderPlacedBannerTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#166534',
+    color: '#92400e',
     marginBottom: 4,
+  },
+
+  orderPlacedBannerText: {
+    color: '#92400e',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 8,
+    fontWeight: '600',
   },
 
   orderPlacedActions: {
     gap: 10,
     marginTop: 14,
+  },
+
+  passengerProgressWrap: {
+    gap: 10,
+    marginBottom: 16,
+  },
+
+  passengerProgressDividerActive: {
+    backgroundColor: '#111827',
+  },
+
+  passengerProgressCaption: {
+    color: '#4b5563',
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+
+  pendingTrackingHint: {
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    backgroundColor: '#fff8db',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  pendingTrackingHintText: {
+    flex: 1,
+    color: '#6b4f12',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  passengerProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
+  passengerProgressStep: {
+    alignItems: 'center',
+    minWidth: 68,
+  },
+
+  passengerProgressDivider: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#e5e7eb',
+    marginHorizontal: 6,
+  },
+
+  passengerProgressDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#d1d5db',
+    marginBottom: 6,
+  },
+
+  passengerProgressDotActive: {
+    backgroundColor: '#d97706',
+  },
+
+  passengerProgressLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  passengerProgressLabelActive: {
+    fontSize: 11,
+    color: '#b45309',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
 
   bottomSheetBackdrop: {
@@ -1241,5 +1631,446 @@ export const passengerStyles = StyleSheet.create({
     minHeight: 110,
     textAlignVertical: 'top',
     paddingTop: 14,
+  },
+
+  rideSummaryStrip: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    padding: 12,
+    backgroundColor: '#fcfcfc',
+    gap: 10,
+  },
+
+  rideSummaryStripItem: {
+    gap: 3,
+  },
+
+  rideSummaryStripLabel: {
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  rideSummaryStripValue: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  liveRideHomeBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 12,
+    gap: 12,
+  },
+
+  liveRideHomeBannerIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  liveRideHomeBannerTextWrap: {
+    flex: 1,
+  },
+
+  liveRideHomeBannerTitle: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+
+  liveRideHomeBannerText: {
+    color: '#4b5563',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+  },
+
+  liveTrackingHeroCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 22,
+    alignItems: 'center',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+
+  liveTrackingHeroIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ecfccb',
+    borderWidth: 1,
+    borderColor: '#d9f99d',
+    marginBottom: 14,
+  },
+
+  liveTrackingHeroIcon: {
+    color: '#365314',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+
+  liveTrackingHeroTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  liveTrackingHeroSubtitle: {
+    color: '#4b5563',
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+
+  trackingActionsRow: {
+    gap: 10,
+    marginTop: 14,
+  },
+
+  liveRideCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 28,
+    padding: 18,
+    backgroundColor: '#ffffff',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+
+  liveRideCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  liveRideTitleWrap: {
+    flex: 1,
+  },
+
+  liveRideEyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+
+  liveRideEyebrowDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#111827',
+  },
+
+  liveRideEyebrow: {
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  liveRideTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 6,
+  },
+
+  liveRideSubtitle: {
+    color: '#4b5563',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  liveRideStatusPill: {
+    borderRadius: 999,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+
+  liveRideStatusPillText: {
+    color: '#92400e',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+
+  liveRideTripRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 14,
+  },
+
+  liveRideRouteColumn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 22,
+    padding: 14,
+    backgroundColor: '#fcfcfc',
+  },
+
+  liveRideRouteNodeWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+
+  liveRideRouteNode: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+
+  liveRideRouteNodePickup: {
+    backgroundColor: '#16a34a',
+  },
+
+  liveRideRouteNodeDestination: {
+    backgroundColor: '#dc2626',
+  },
+
+  liveRideRouteTextWrap: {
+    flex: 1,
+  },
+
+  liveRideRouteLabel: {
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 3,
+  },
+
+  liveRideRouteValue: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  liveRideRouteLine: {
+    width: 2,
+    height: 18,
+    backgroundColor: '#d1d5db',
+    marginLeft: 5,
+    marginVertical: 8,
+  },
+
+  liveRideMiniMetaCard: {
+    width: 92,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderRadius: 22,
+    padding: 12,
+    backgroundColor: '#fff8db',
+    alignItems: 'flex-start',
+  },
+
+  liveRideMiniMetaLabel: {
+    color: '#6b7280',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+
+  liveRideMiniMetaValue: {
+    color: '#111827',
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+
+  liveRideMiniMetaSecondary: {
+    color: '#374151',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+
+  liveRideDriverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 22,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    marginBottom: 14,
+    gap: 12,
+  },
+
+  liveRideDriverImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+
+  liveRideDriverTextWrap: {
+    flex: 1,
+  },
+
+  liveRideDriverName: {
+    color: '#111827',
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 3,
+  },
+
+  liveRideDriverMeta: {
+    color: '#4b5563',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+
+  liveRideDriverHint: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  liveRideDriverBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+
+  liveRideSoftBanner: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    borderRadius: 18,
+    padding: 14,
+  },
+
+  liveRideSoftBannerText: {
+    color: '#4b5563',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+  },
+
+  liveRideBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  liveRideActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+
+  liveRideFooterPill: {
+    flex: 1,
+    borderRadius: 999,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  liveRideFooterPillText: {
+    color: '#111827',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  liveRideRefreshButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 999,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+
+  liveRideRefreshButtonText: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  liveRideCancelButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 999,
+    backgroundColor: '#fff7f7',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  liveRideCancelButtonText: {
+    color: '#991b1b',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  cancelRideGhostButton: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    backgroundColor: '#fff7f7',
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelRideGhostButtonText: {
+    color: '#991b1b',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

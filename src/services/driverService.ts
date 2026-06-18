@@ -74,6 +74,22 @@ export async function updateDriverRideStatus(payload: {
   return response.data;
 }
 
+export async function cancelDriverRide(payload: {
+  rideId: number;
+  driverId: number;
+  reason: string;
+  note?: string;
+}) {
+  const response = await api.post('/Rides/cancel', {
+    rideId: payload.rideId,
+    actorRole: 'Driver',
+    actorId: payload.driverId,
+    reason: payload.reason,
+    note: payload.note,
+  });
+  return response.data;
+}
+
 export async function getDriverRideTracking(
   rideId: number
 ): Promise<RideTrackingSnapshot> {

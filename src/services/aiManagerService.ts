@@ -37,3 +37,19 @@ export async function getAiAllDrivers(): Promise<AiDriverDirectoryItemType[]> {
   const response = await api.get('/Drivers');
   return Array.isArray(response.data) ? response.data : [];
 }
+
+export async function cancelRideAsManager(payload: {
+  rideId: number;
+  managerId: number;
+  reason: string;
+  note?: string;
+}) {
+  const response = await api.post('/Rides/cancel', {
+    rideId: payload.rideId,
+    actorRole: 'AIManager',
+    actorId: payload.managerId,
+    reason: payload.reason,
+    note: payload.note,
+  });
+  return response.data;
+}

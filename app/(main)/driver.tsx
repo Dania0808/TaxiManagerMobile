@@ -11,11 +11,14 @@ import { useState } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import AppNavbar from '../../src/components/AppNavbar';
+import CancelRideModal from '../../src/components/shared/CancelRideModal';
 import { useDriverScreen } from '../../src/hooks/useDriverScreen';
 import { AvailableRideType } from '../../src/types/driver';
 import { driverStyles as styles } from '../../src/styles/driverStyles';
 
 const RELEVANT_RIDE_RADIUS_KM = 15;
+const PICKUP_SPEED_KM_PER_HOUR = 28;
+const TRIP_SPEED_KM_PER_HOUR = 32;
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -52,6 +55,126 @@ function formatWait(minutes: number | null | undefined) {
 function formatTripDuration(minutes: number | null | undefined) {
   if (minutes == null) return 'Trip duration unavailable';
   return `${minutes} min estimated trip`;
+}
+
+function estimateMinutesFromDistance(
+  distanceKilometers: number | null,
+  averageSpeedKmPerHour: number
+) {
+  if (
+    distanceKilometers == null ||
+    !Number.isFinite(distanceKilometers) ||
+    distanceKilometers < 0 ||
+    averageSpeedKmPerHour <= 0
+  ) {
+    return null;
+  }
+
+  return Math.max(1, Math.round((distanceKilometers / averageSpeedKmPerHour) * 60));
+}
+
+function formatDistanceFromDriver(
+  ride: AvailableRideType,
+  currentCoords: { latitude: number; longitude: number } | null
+) {
+  if (
+    !currentCoords ||
+    ride.pickupLatitude == null ||
+    ride.pickupLongitude == null
+  ) {
+    return null;
+  }
+
+  const km = distanceKm(
+    currentCoords.latitude,
+    currentCoords.longitude,
+    ride.pickupLatitude,
+    ride.pickupLongitude
+  );
+
+  if (km < 1) {
+    return `${Math.round(km * 1000)} m away`;
+  }
+
+  return `${km.toFixed(1)} km away`;
+}
+
+function getDistanceFromDriverKm(
+  ride: AvailableRideType,
+  currentCoords: { latitude: number; longitude: number } | null
+) {
+  if (
+    !currentCoords ||
+    ride.pickupLatitude == null ||
+    ride.pickupLongitude == null
+  ) {
+    return null;
+  }
+
+  return distanceKm(
+    currentCoords.latitude,
+    currentCoords.longitude,
+    ride.pickupLatitude,
+    ride.pickupLongitude
+  );
+}
+
+function getEstimatedTripMinutesForRide(ride: {
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+  estimatedTripDurationMinutes?: number | null;
+}) {
+  if (ride.estimatedTripDurationMinutes != null) {
+    return ride.estimatedTripDurationMinutes;
+  }
+
+  if (
+    ride.pickupLatitude == null ||
+    ride.pickupLongitude == null ||
+    ride.destinationLatitude == null ||
+    ride.destinationLongitude == null
+  ) {
+    return null;
+  }
+
+  const tripDistanceKm = distanceKm(
+    ride.pickupLatitude,
+    ride.pickupLongitude,
+    ride.destinationLatitude,
+    ride.destinationLongitude
+  );
+
+  return estimateMinutesFromDistance(tripDistanceKm, TRIP_SPEED_KM_PER_HOUR);
+}
+
+function getEstimatedPickupMinutesForRide(
+  ride: {
+    pickupLatitude?: number | null;
+    pickupLongitude?: number | null;
+    estimatedPickupMinutes?: number | null;
+  },
+  currentCoords: { latitude: number; longitude: number } | null
+) {
+  if (ride.estimatedPickupMinutes != null) {
+    return ride.estimatedPickupMinutes;
+  }
+
+  const pickupDistanceKm = getDistanceFromDriverKm(
+    {
+      id: 0,
+      pickupLocation: '',
+      destination: '',
+      rideType: '',
+      isShared: false,
+      pickupLatitude: ride.pickupLatitude,
+      pickupLongitude: ride.pickupLongitude,
+    },
+    currentCoords
+  );
+
+  return estimateMinutesFromDistance(pickupDistanceKm, PICKUP_SPEED_KM_PER_HOUR);
 }
 
 function getDriverPhaseCopy(phase: string) {
@@ -163,6 +286,7 @@ function getTripStage(
 export default function DriverScreen() {
   const [selectedOpenRideId, setSelectedOpenRideId] = useState<number | null>(null);
   const [showAllRelevantRides, setShowAllRelevantRides] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const {
     user,
     loadingUser,
@@ -191,6 +315,7 @@ export default function DriverScreen() {
     activeOfferActionId,
     activeClaimRideId,
     isUpdatingRideStatus,
+    isCancellingRide,
     handleAcceptRide,
     handleClaimOpenRideRequest,
     handleDeclineIncomingOffer,
@@ -200,6 +325,7 @@ export default function DriverScreen() {
     handleUpdateRideStatus,
     handleRefreshTracking,
     handleOpenExternalNavigation,
+    handleCancelCurrentRide,
   } = useDriverScreen();
 
   if (notLoggedIn) {
@@ -298,6 +424,10 @@ export default function DriverScreen() {
     sortedRelevantOpenRequests.find((ride) => ride.id === selectedOpenRideId) ??
     sortedRelevantOpenRequests[0] ??
     null;
+  const selectedRideIsClosest =
+    selectedOpenRide != null && closestRelevantRide != null
+      ? selectedOpenRide.id === closestRelevantRide.id
+      : false;
   const stateTitle =
     driverScreenState === 'offline'
       ? 'Offline'
@@ -314,6 +444,14 @@ export default function DriverScreen() {
   const phaseCopy = getDriverPhaseCopy(driverPhase);
   const isOfferActionLoading =
     incomingOffer?.offerId != null && activeOfferActionId === incomingOffer.offerId;
+  const currentRideTripEstimateMinutes =
+    currentRide != null ? getEstimatedTripMinutesForRide(currentRide) : null;
+  const selectedRidePickupEtaMinutes =
+    selectedOpenRide != null
+      ? getEstimatedPickupMinutesForRide(selectedOpenRide, currentCoords)
+      : null;
+  const selectedRideTripEstimateMinutes =
+    selectedOpenRide != null ? getEstimatedTripMinutesForRide(selectedOpenRide) : null;
 
   return (
     <View style={styles.screen}>
@@ -327,48 +465,79 @@ export default function DriverScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.heroCard}>
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroIdentityRow}>
-              <View style={styles.heroIconWrap}>
-                <Text style={styles.heroIcon}>D</Text>
-              </View>
-
+        <View style={styles.heroCardCompact}>
+          <View style={styles.heroPanel}>
+            <View style={styles.heroPanelTopRow}>
               <View style={styles.heroTextWrap}>
-                <Text style={styles.sectionTitle}>Driver Dispatch</Text>
-                <Text style={styles.heroSubtitle}>{stateTitle}</Text>
+                <Text style={styles.heroEyebrow}>Driver mode</Text>
+                <Text style={styles.heroHeadline}>
+                  {isOnline ? 'Ready for the next pickup' : 'Go online to start receiving rides'}
+                </Text>
+                <Text style={styles.heroSubtitleStrong}>{phaseCopy.title}</Text>
+              </View>
+
+              <View
+                style={[
+                  styles.heroStatusBadge,
+                  isOnline ? styles.heroStatusBadgeOnline : styles.heroStatusBadgeOffline,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.heroStatusBadgeText,
+                    isOnline
+                      ? styles.heroStatusBadgeTextOnline
+                      : styles.heroStatusBadgeTextOffline,
+                  ]}
+                >
+                  {isTogglingOnline ? 'Updating' : isOnline ? 'Online' : 'Offline'}
+                </Text>
               </View>
             </View>
 
-            <View style={styles.availabilityWrap}>
+            <View style={styles.heroDivider} />
+
+            <View style={styles.heroMetricsRow}>
+              <View style={styles.heroMetricCard}>
+                <Text style={styles.heroMetricLabel}>Status</Text>
+                <Text style={styles.heroMetricValue}>{stateTitle}</Text>
+                <Text style={styles.heroMetricHint}>Live dispatch state</Text>
+              </View>
+
+              <View style={styles.heroMetricCard}>
+                <Text style={styles.heroMetricLabel}>Nearby rides</Text>
+                <Text style={styles.heroMetricValue}>{relevantOpenRequests.length}</Text>
+                <Text style={styles.heroMetricHint}>
+                  {isOnline ? 'Closest rides first' : 'Visible once online'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.driverAvailabilityStrip}>
+            <View style={styles.driverAvailabilityTextWrap}>
               <Text style={styles.availabilityLabel}>
-                {isTogglingOnline ? 'Updating' : isOnline ? 'Online' : 'Offline'}
+                {isOnline ? 'Receiving new ride requests' : 'Driver availability'}
               </Text>
-              <Switch
-                value={isOnline}
-                onValueChange={handleToggleOnlineStatus}
-                disabled={isTogglingOnline}
-              />
-            </View>
-          </View>
-
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatPill}>
-              <Text style={styles.heroStatLabel}>Open Requests</Text>
-              <Text style={styles.heroStatValue}>{relevantOpenRequests.length}</Text>
-              <Text style={styles.heroStatHint}>
-                {isRefreshingRequests ? 'Refreshing request pool...' : 'Closest rides are prioritized'}
+              <Text style={styles.driverAvailabilityValue}>
+                {isTogglingOnline ? 'Updating...' : isOnline ? 'Online' : 'Offline'}
               </Text>
             </View>
+            <Switch
+              value={isOnline}
+              onValueChange={handleToggleOnlineStatus}
+              disabled={isTogglingOnline}
+            />
           </View>
 
-          <View style={styles.dispatchModeCard}>
-            <Text style={styles.dispatchModeTitle}>{phaseCopy.title}</Text>
-            <Text style={styles.helperText}>{phaseCopy.subtitle}</Text>
-          </View>
+          <Text style={styles.heroFooterNote}>
+            {isOnline
+              ? 'Stay visible on the map and claim the best pickup quickly.'
+              : 'Turn on availability when you are ready to appear for nearby passengers.'}
+          </Text>
         </View>
 
-        {message ? (
+        {message && message !== 'You are online and ready for new nearby ride requests.' ? (
           <View
             style={[
               styles.globalBanner,
@@ -388,108 +557,6 @@ export default function DriverScreen() {
           <View style={[styles.globalBanner, styles.warningBanner]}>
             <Text style={styles.globalBannerTitle}>Location Needed</Text>
             <Text style={styles.globalBannerText}>{locationError}</Text>
-          </View>
-        ) : null}
-
-        {!currentRide && isOnline ? (
-          <View style={styles.card}>
-            <View style={styles.cardTitleRow}>
-              <View style={styles.cardTitleIconWrap}>
-                <Text style={styles.cardTitleIcon}>I</Text>
-              </View>
-              <Text style={styles.cardTitle}>Closest Pickup Ride</Text>
-            </View>
-
-            {closestRelevantRide ? (
-              <>
-                <View style={styles.urgentBanner}>
-                  <Text style={styles.urgentTitle}>
-                    {formatWait(getRideWaitMinutes(closestRelevantRide))}
-                  </Text>
-                  <Text style={styles.helperText}>
-                    {formatTripDuration(closestRelevantRide.estimatedTripDurationMinutes)}
-                  </Text>
-                  <Text style={styles.helperText}>
-                    {closestRelevantRide.estimatedPickupMinutes != null
-                      ? `${closestRelevantRide.estimatedPickupMinutes} min to pickup`
-                      : 'Pickup ETA will appear when available'}
-                  </Text>
-                  {incomingOffer?.id === closestRelevantRide.id &&
-                  incomingOfferCountdownSeconds != null ? (
-                    <Text style={styles.urgentCountdown}>
-                      Offer expires in {incomingOfferCountdownSeconds}s
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.innerCard}>
-                  <Text style={styles.cardBodyTitle}>Pickup</Text>
-                  <Text style={styles.cardBodyValue}>{closestRelevantRide.pickupLocation}</Text>
-                  <Text style={styles.cardBodyTitle}>Destination</Text>
-                  <Text style={styles.cardBodyValue}>{closestRelevantRide.destination}</Text>
-
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaPill}>
-                      <Text style={styles.metaPillText}>{closestRelevantRide.rideType}</Text>
-                    </View>
-                    <View style={styles.metaPill}>
-                      <Text style={styles.metaPillText}>
-                        {closestRelevantRide.isShared ? 'Shared ride' : 'Private ride'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    (isOfferActionLoading ||
-                      activeClaimRideId === closestRelevantRide.id) &&
-                      styles.actionButtonDisabled,
-                  ]}
-                  onPress={() =>
-                    incomingOffer?.id === closestRelevantRide.id
-                      ? handleAcceptRide(incomingOffer.offerId)
-                      : handleClaimOpenRideRequest(closestRelevantRide.id)
-                  }
-                  disabled={
-                    isOfferActionLoading || activeClaimRideId === closestRelevantRide.id
-                  }
-                >
-                  <Text style={styles.actionButtonText}>
-                    {incomingOffer?.id === closestRelevantRide.id
-                      ? isOfferActionLoading
-                        ? 'Accepting Request...'
-                        : 'Accept Request'
-                      : activeClaimRideId === closestRelevantRide.id
-                        ? 'Claiming Ride...'
-                        : 'Claim Closest Ride'}
-                  </Text>
-                </TouchableOpacity>
-
-                {incomingOffer?.id === closestRelevantRide.id ? (
-                  <TouchableOpacity
-                    style={[
-                      styles.secondaryButton,
-                      isOfferActionLoading && styles.secondaryButtonDisabled,
-                    ]}
-                    onPress={handleDeclineIncomingOffer}
-                    disabled={isOfferActionLoading}
-                  >
-                    <Text style={styles.secondaryButtonText}>
-                      {isOfferActionLoading ? 'Updating...' : 'Decline For Now'}
-                    </Text>
-                  </TouchableOpacity>
-                ) : null}
-              </>
-            ) : (
-              <View style={styles.emptyStateCard}>
-                <Text style={styles.emptyStateTitle}>Waiting for the next nearby request</Text>
-                <Text style={styles.helperText}>
-                  Stay online and we will surface the closest nearby pickup here.
-                </Text>
-              </View>
-            )}
           </View>
         ) : null}
 
@@ -569,7 +636,7 @@ export default function DriverScreen() {
                 Passenger wait: {formatWait(activeRideWaitMinutes)}
               </Text>
               <Text style={styles.helperText}>
-                {formatTripDuration(estimatedTripDurationMinutes)}
+                {formatTripDuration(currentRideTripEstimateMinutes ?? estimatedTripDurationMinutes)}
               </Text>
             </View>
 
@@ -646,7 +713,7 @@ export default function DriverScreen() {
               <View style={styles.tripInfoBlock}>
                 <Text style={styles.cardBodyTitle}>Estimated Drive</Text>
                 <Text style={styles.cardBodyValue}>
-                  {formatTripDuration(estimatedTripDurationMinutes)}
+                  {formatTripDuration(currentRideTripEstimateMinutes ?? estimatedTripDurationMinutes)}
                 </Text>
               </View>
             </View>
@@ -696,6 +763,21 @@ export default function DriverScreen() {
                 {isRefreshingRide ? 'Refreshing Current Ride...' : 'Refresh Current Ride'}
               </Text>
             </TouchableOpacity>
+
+            {currentRide.status !== 'PickedUp' ? (
+              <TouchableOpacity
+                style={[
+                  styles.dangerButton,
+                  isCancellingRide && styles.secondaryButtonDisabled,
+                ]}
+                onPress={() => setIsCancelModalOpen(true)}
+                disabled={isCancellingRide}
+              >
+                <Text style={styles.dangerButtonText}>
+                  {isCancellingRide ? 'Cancelling Ride...' : 'Cancel Ride'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : null}
 
@@ -705,7 +787,12 @@ export default function DriverScreen() {
               <View style={styles.cardTitleIconWrap}>
                 <Text style={styles.cardTitleIcon}>M</Text>
               </View>
-              <Text style={styles.cardTitle}>Open Requests Map</Text>
+              <View style={styles.dispatchTitleWrap}>
+                <Text style={styles.cardTitle}>Live Dispatch</Text>
+                <Text style={styles.dispatchTitleSubtext}>
+                  Map, priority ride, and nearby requests in one view
+                </Text>
+              </View>
             </View>
 
             {isOnline ? (
@@ -746,15 +833,62 @@ export default function DriverScreen() {
 
                 {selectedOpenRide ? (
                   <View style={styles.mapPreviewCard}>
-                    <Text style={styles.mapPreviewTitle}>Selected Pickup</Text>
+                    <View style={styles.priorityHeaderRow}>
+                      <View>
+                        <Text style={styles.mapPreviewTitle}>
+                          {selectedRideIsClosest ? 'Closest ride now' : 'Selected ride'}
+                        </Text>
+                        <Text style={styles.prioritySubtitle}>
+                          {selectedRideIsClosest
+                            ? 'Best next pickup based on your current location'
+                            : 'Tap other markers or cards to compare nearby requests'}
+                        </Text>
+                      </View>
+                      {selectedRideIsClosest ? (
+                        <View style={styles.priorityBadge}>
+                          <Text style={styles.priorityBadgeText}>Priority</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
                     <Text style={styles.cardBodyValue}>{selectedOpenRide.pickupLocation}</Text>
                     <Text style={styles.detailText}>{selectedOpenRide.destination}</Text>
-                    <Text style={styles.helperText}>
-                      {formatWait(getRideWaitMinutes(selectedOpenRide))}
-                    </Text>
-                    <Text style={styles.helperText}>
-                      {formatTripDuration(selectedOpenRide.estimatedTripDurationMinutes)}
-                    </Text>
+                    <View style={styles.rideInfoGrid}>
+                      <View style={styles.rideInfoCell}>
+                        <Text style={styles.rideInfoLabel}>Wait</Text>
+                        <Text style={styles.rideInfoValue}>
+                          {formatWait(getRideWaitMinutes(selectedOpenRide))}
+                        </Text>
+                      </View>
+                      <View style={styles.rideInfoCell}>
+                        <Text style={styles.rideInfoLabel}>Trip</Text>
+                        <Text style={styles.rideInfoValue}>
+                          {formatTripDuration(selectedRideTripEstimateMinutes)}
+                        </Text>
+                      </View>
+                      <View style={styles.rideInfoCell}>
+                        <Text style={styles.rideInfoLabel}>Pickup ETA</Text>
+                        <Text style={styles.rideInfoValue}>
+                          {selectedRidePickupEtaMinutes != null
+                            ? `${selectedRidePickupEtaMinutes} min to pickup`
+                            : 'Unavailable'}
+                        </Text>
+                      </View>
+                      <View style={styles.rideInfoCell}>
+                        <Text style={styles.rideInfoLabel}>Distance</Text>
+                        <Text style={styles.rideInfoValue}>
+                          {formatDistanceFromDriver(selectedOpenRide, currentCoords) ??
+                            'Unavailable'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {incomingOffer?.id === selectedOpenRide.id &&
+                    incomingOfferCountdownSeconds != null ? (
+                      <Text style={styles.urgentCountdown}>
+                        Offer expires in {incomingOfferCountdownSeconds}s
+                      </Text>
+                    ) : null}
 
                     <View style={styles.metaRow}>
                       <View style={styles.metaPill}>
@@ -770,20 +904,54 @@ export default function DriverScreen() {
                     <TouchableOpacity
                       style={[
                         styles.actionButton,
-                        activeClaimRideId === selectedOpenRide.id &&
+                        (activeClaimRideId === selectedOpenRide.id || isOfferActionLoading) &&
                           styles.actionButtonDisabled,
                       ]}
-                      onPress={() => handleClaimOpenRideRequest(selectedOpenRide.id)}
-                      disabled={activeClaimRideId === selectedOpenRide.id}
+                      onPress={() =>
+                        incomingOffer?.id === selectedOpenRide.id
+                          ? handleAcceptRide(incomingOffer.offerId)
+                          : handleClaimOpenRideRequest(selectedOpenRide.id)
+                      }
+                      disabled={
+                        activeClaimRideId === selectedOpenRide.id || isOfferActionLoading
+                      }
                     >
                       <Text style={styles.actionButtonText}>
-                        {activeClaimRideId === selectedOpenRide.id
-                          ? 'Claiming Ride...'
-                          : 'Claim This Ride'}
+                        {incomingOffer?.id === selectedOpenRide.id
+                          ? isOfferActionLoading
+                            ? 'Accepting Request...'
+                            : 'Accept Request'
+                          : activeClaimRideId === selectedOpenRide.id
+                            ? 'Claiming Ride...'
+                            : selectedRideIsClosest
+                              ? 'Claim Closest Ride'
+                              : 'Claim This Ride'}
                       </Text>
                     </TouchableOpacity>
+
+                    {incomingOffer?.id === selectedOpenRide.id ? (
+                      <TouchableOpacity
+                        style={[
+                          styles.secondaryButton,
+                          isOfferActionLoading && styles.secondaryButtonDisabled,
+                        ]}
+                        onPress={handleDeclineIncomingOffer}
+                        disabled={isOfferActionLoading}
+                      >
+                        <Text style={styles.secondaryButtonText}>
+                          {isOfferActionLoading ? 'Updating...' : 'Decline For Now'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
-                ) : null}
+                ) : (
+                  <View style={styles.mapPreviewCard}>
+                    <Text style={styles.mapPreviewTitle}>Nearby map view</Text>
+                    <Text style={styles.helperText}>
+                      Tap a pickup marker to preview the ride and claim it quickly.
+                    </Text>
+                  </View>
+                )}
 
                 <TouchableOpacity
                   style={[
@@ -809,16 +977,67 @@ export default function DriverScreen() {
                   </View>
                 ) : (
                   <>
+                    <View style={styles.listHeaderRow}>
+                      <Text style={styles.listHeaderTitle}>Available nearby rides</Text>
+                      <Text style={styles.listHeaderCount}>
+                        {relevantOpenRequests.length} visible
+                      </Text>
+                    </View>
+
                     {visibleRelevantRides.map((ride) => (
-                      <View key={ride.id} style={styles.innerCard}>
-                        <Text style={styles.cardBodyValue}>{ride.pickupLocation}</Text>
-                        <Text style={styles.detailText}>{ride.destination}</Text>
-                        <Text style={styles.helperText}>
-                          {formatWait(getRideWaitMinutes(ride))}
-                        </Text>
-                        <Text style={styles.helperText}>
-                          {formatTripDuration(ride.estimatedTripDurationMinutes)}
-                        </Text>
+                      <TouchableOpacity
+                        key={ride.id}
+                        style={[
+                          styles.innerCard,
+                          styles.dispatchRideCard,
+                          selectedOpenRide?.id === ride.id && styles.dispatchRideCardSelected,
+                        ]}
+                        onPress={() => setSelectedOpenRideId(ride.id)}
+                        activeOpacity={0.9}
+                      >
+                        <View style={styles.dispatchRideHeaderRow}>
+                          <View style={styles.dispatchRideTextWrap}>
+                            <Text style={styles.cardBodyValue}>{ride.pickupLocation}</Text>
+                            <Text style={styles.detailText}>{ride.destination}</Text>
+                          </View>
+                          {closestRelevantRide?.id === ride.id ? (
+                            <View style={styles.closestBadge}>
+                              <Text style={styles.closestBadgeText}>Closest</Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        <View style={styles.rideMiniStatsRow}>
+                          <View style={styles.rideMiniStat}>
+                            <Text style={styles.rideMiniStatLabel}>Wait</Text>
+                            <Text style={styles.rideMiniStatValue}>
+                              {formatWait(getRideWaitMinutes(ride))}
+                            </Text>
+                          </View>
+                          <View style={styles.rideMiniStat}>
+                            <Text style={styles.rideMiniStatLabel}>Trip</Text>
+                            <Text style={styles.rideMiniStatValue}>
+                              {formatTripDuration(getEstimatedTripMinutesForRide(ride))}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {formatDistanceFromDriver(ride, currentCoords) ? (
+                          <Text style={styles.helperText}>
+                            {formatDistanceFromDriver(ride, currentCoords)}
+                          </Text>
+                        ) : null}
+
+                        <View style={styles.metaRow}>
+                          <View style={styles.metaPill}>
+                            <Text style={styles.metaPillText}>{ride.rideType}</Text>
+                          </View>
+                          <View style={styles.metaPill}>
+                            <Text style={styles.metaPillText}>
+                              {ride.isShared ? 'Shared ride' : 'Private ride'}
+                            </Text>
+                          </View>
+                        </View>
 
                         <TouchableOpacity
                           style={[
@@ -831,10 +1050,12 @@ export default function DriverScreen() {
                           <Text style={styles.secondaryButtonText}>
                             {activeClaimRideId === ride.id
                               ? 'Claiming Ride...'
-                              : 'Claim This Ride'}
+                              : closestRelevantRide?.id === ride.id
+                                ? 'Claim Closest Ride'
+                                : 'Claim This Ride'}
                           </Text>
                         </TouchableOpacity>
-                      </View>
+                      </TouchableOpacity>
                     ))}
 
                     {relevantOpenRequests.length > 3 ? (
@@ -855,16 +1076,59 @@ export default function DriverScreen() {
                 )}
               </>
             ) : (
-              <View style={styles.emptyStateCard}>
-                <Text style={styles.emptyStateTitle}>You are offline</Text>
-                <Text style={styles.helperText}>
-                  Go online to receive nearby requests and browse open passenger pickups.
-                </Text>
-              </View>
+              <>
+                <MapView
+                  style={styles.map}
+                  region={{
+                    latitude: mapCenter.latitude,
+                    longitude: mapCenter.longitude,
+                    latitudeDelta: 0.08,
+                    longitudeDelta: 0.08,
+                  }}
+                >
+                  {currentCoords ? (
+                    <Marker
+                      coordinate={currentCoords}
+                      title="You"
+                      description="Your live location"
+                      pinColor="blue"
+                    />
+                  ) : null}
+                </MapView>
+
+                <View style={styles.mapPreviewCard}>
+                  <Text style={styles.mapPreviewTitle}>Map standby</Text>
+                  <Text style={styles.helperText}>
+                    Go online to see nearby requests appear around your current location.
+                  </Text>
+                </View>
+              </>
             )}
           </View>
         ) : null}
       </ScrollView>
+
+      <CancelRideModal
+        visible={isCancelModalOpen}
+        title="Cancel current ride?"
+        subtitle="This returns the ride to dispatch so another driver can pick it up. Cancellation is only available before pickup."
+        confirmLabel="Return ride to dispatch"
+        reasons={[
+          'Cannot reach passenger',
+          'Vehicle issue',
+          'Traffic or route issue',
+          'Accepted by mistake',
+        ]}
+        allowNote
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={async (reason, note) => {
+          const success = await handleCancelCurrentRide(reason, note);
+          if (success) {
+            setIsCancelModalOpen(false);
+          }
+        }}
+        isSubmitting={isCancellingRide}
+      />
     </View>
   );
 }
