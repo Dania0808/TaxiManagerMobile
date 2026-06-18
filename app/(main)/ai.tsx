@@ -96,7 +96,11 @@ export default function AiManagerScreen() {
 
   return (
     <View style={styles.screen}>
-      <AppNavbar fullName={user?.fullName} subtitle="AI manager dashboard" />
+      <AppNavbar
+        fullName={user?.fullName}
+        notificationsRoute="/(main)/notifications"
+        subtitle="AI manager dashboard"
+      />
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>

@@ -18,6 +18,7 @@ import { removePushNotificationsAsync } from '../services/notificationService';
 type AppNavbarProps = {
   fullName?: string;
   profileRoute?: Href;
+  notificationsRoute?: Href;
   coinBalance?: number;
   profileImageStorageKey?: string;
   subtitle?: string;
@@ -26,6 +27,7 @@ type AppNavbarProps = {
 export default function AppNavbar({
   fullName,
   profileRoute,
+  notificationsRoute,
   coinBalance,
   profileImageStorageKey,
   subtitle = 'Passenger dashboard',
@@ -78,6 +80,12 @@ export default function AppNavbar({
     if (!profileRoute) return;
     setIsDrawerOpen(false);
     router.push(profileRoute);
+  };
+
+  const handleOpenNotifications = () => {
+    if (!notificationsRoute) return;
+    setIsDrawerOpen(false);
+    router.push(notificationsRoute);
   };
 
   return (
@@ -152,6 +160,21 @@ export default function AppNavbar({
             ) : null}
 
             <View style={styles.drawerActions}>
+              <TouchableOpacity
+                style={styles.drawerActionButton}
+                onPress={handleOpenNotifications}
+                disabled={!notificationsRoute}
+                activeOpacity={0.85}
+              >
+                <View style={styles.drawerActionIconWrap}>
+                  <MaterialCommunityIcons name="bell-outline" size={18} color="#111827" />
+                </View>
+                <View style={styles.drawerActionTextWrap}>
+                  <Text style={styles.drawerActionTitle}>Notifications</Text>
+                  <Text style={styles.drawerActionSubtitle}>See recent ride alerts</Text>
+                </View>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.drawerActionButton}
                 onPress={handleOpenProfile}

@@ -134,6 +134,7 @@ export default function PassengerScreen() {
       <AppNavbar
         fullName={user?.fullName}
         profileRoute="/(main)/passenger-profile"
+        notificationsRoute="/(main)/notifications"
         coinBalance={coinBalance}
         profileImageStorageKey={profileImageStorageKey}
       />

@@ -42,3 +42,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+taximanagermobile-firebase-adminsdk-fbsvc-f65b68fc16.json
+google-services.json
+.gradle-user-home/

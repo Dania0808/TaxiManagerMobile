@@ -458,6 +458,7 @@ export default function DriverScreen() {
       <AppNavbar
         fullName={user?.fullName}
         profileRoute="/(main)/driver-profile"
+        notificationsRoute="/(main)/notifications"
         profileImageStorageKey={
           user?.driverId ? `driver_profile_image_url_${user.driverId}` : undefined
         }

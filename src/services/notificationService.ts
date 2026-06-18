@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import type { Href } from 'expo-router';
 import { Platform } from 'react-native';
 import api from './api';
 
@@ -10,6 +11,14 @@ type StoredUser = {
   id?: number;
   role?: string;
 };
+
+type NotificationRouteTarget =
+  | '/(main)/passenger'
+  | '/(main)/passenger-tracking'
+  | '/(main)/passenger-feedback'
+  | '/(main)/driver'
+  | '/(main)/ai'
+  | null;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -51,6 +60,57 @@ async function getStoredUser(): Promise<StoredUser | null> {
     return JSON.parse(rawUser) as StoredUser;
   } catch {
     return null;
+  }
+}
+
+function getNotificationData(
+  response: Notifications.NotificationResponse | null
+): Record<string, unknown> | null {
+  return response?.notification.request.content.data ?? null;
+}
+
+function resolveNotificationRouteTarget(
+  data: Record<string, unknown> | null
+): NotificationRouteTarget {
+  const target = typeof data?.target === 'string' ? data.target : '';
+
+  switch (target) {
+    case 'passenger_tracking':
+      return '/(main)/passenger-tracking';
+    case 'passenger_feedback':
+      return '/(main)/passenger-feedback';
+    case 'passenger_home':
+      return '/(main)/passenger';
+    case 'driver_home':
+      return '/(main)/driver';
+    case 'ai_home':
+      return '/(main)/ai';
+    default:
+      return null;
+  }
+}
+
+export function addNotificationTapListener(onNavigate: (route: Href) => void) {
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    (response) => {
+      const route = resolveNotificationRouteTarget(getNotificationData(response));
+      if (route) {
+        onNavigate(route);
+      }
+    }
+  );
+
+  return () => subscription.remove();
+}
+
+export async function handleLastNotificationTap(
+  onNavigate: (route: Href) => void
+) {
+  const response = await Notifications.getLastNotificationResponseAsync();
+  const route = resolveNotificationRouteTarget(getNotificationData(response));
+
+  if (route) {
+    onNavigate(route);
   }
 }
 

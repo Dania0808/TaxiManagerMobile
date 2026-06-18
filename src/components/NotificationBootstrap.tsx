@@ -1,7 +1,14 @@
+import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { registerPushNotificationsAsync } from '../services/notificationService';
+import {
+  addNotificationTapListener,
+  handleLastNotificationTap,
+  registerPushNotificationsAsync,
+} from '../services/notificationService';
 
 export default function NotificationBootstrap() {
+  const router = useRouter();
+
   useEffect(() => {
     let isMounted = true;
 
@@ -25,10 +32,21 @@ export default function NotificationBootstrap() {
 
     bootstrapNotifications();
 
+    handleLastNotificationTap((route) => {
+      router.push(route);
+    }).catch((error) => {
+      console.log('LAST NOTIFICATION TAP ERROR:', error);
+    });
+
+    const unsubscribe = addNotificationTapListener((route) => {
+      router.push(route);
+    });
+
     return () => {
       isMounted = false;
+      unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   return null;
 }
