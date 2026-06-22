@@ -66,6 +66,14 @@ export async function getDriverCurrentRide(driverId: number) {
   return response.data;
 }
 
+export async function closeDriverCompletedRidePayment(payload: {
+  rideId: number;
+  driverId: number;
+}) {
+  const response = await api.post('/Payments/driver-close-completed', payload);
+  return response.data;
+}
+
 export async function updateDriverRideStatus(payload: {
   rideId: number;
   status: string;

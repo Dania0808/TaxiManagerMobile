@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -35,7 +35,7 @@ function getTrackingHeroCopy(status?: string) {
     return {
       title: 'Ride completed',
       subtitle:
-        'Your trip has ended. Review the final ride details below and continue to feedback when you are ready.',
+        'Your trip has ended. Continue to payment first, then decide whether you want to leave feedback.',
     };
   }
 
@@ -47,6 +47,9 @@ function getTrackingHeroCopy(status?: string) {
 
 export default function PassengerTrackingScreen() {
   const router = useRouter();
+  const { notificationRefreshAt } = useLocalSearchParams<{
+    notificationRefreshAt?: string;
+  }>();
   const {
     user,
     loadingUser,
@@ -62,6 +65,13 @@ export default function PassengerTrackingScreen() {
     handleRefreshTrackingSnapshot,
   } = usePassengerScreen();
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  useEffect(() => {
+    if (!notificationRefreshAt) return;
+
+    handleGetCurrentRide();
+    handleRefreshTrackingSnapshot();
+  }, [notificationRefreshAt, handleGetCurrentRide, handleRefreshTrackingSnapshot]);
 
   useEffect(() => {
     if (currentRide?.status === 'Completed' && pendingFeedbackRide) {
@@ -163,7 +173,7 @@ export default function PassengerTrackingScreen() {
           <Text style={styles.cardTitle}>{trackingTitle}</Text>
           <Text style={styles.helperText}>
             {currentRide?.status === 'Completed'
-              ? 'Your trip has ended. Review the final details below and leave feedback to earn coins.'
+              ? 'Your trip has ended. Payment comes first, and feedback is optional afterward.'
               : 'This page shows the driver&apos;s live position and the current trip stage.'}
           </Text>
 
@@ -307,8 +317,7 @@ export default function PassengerTrackingScreen() {
               </View>
               <Text style={styles.completionModalTitle}>Your ride has ended</Text>
               <Text style={styles.completionModalSubtitle}>
-                Thanks for riding with Taxi Manager. Give feedback now to complete the trip
-                and earn your coins.
+                Complete the ride payment first. After that, you can leave optional feedback if you want.
               </Text>
             </View>
 
@@ -317,10 +326,13 @@ export default function PassengerTrackingScreen() {
                 style={styles.primaryButton}
                 onPress={() => {
                   setShowCompletionModal(false);
-                  router.push('/(main)/passenger-feedback');
+                  router.push({
+                    pathname: '/(main)/passenger-payment',
+                    params: { rideId: String(pendingFeedbackRide?.id ?? currentRide?.id ?? '') },
+                  });
                 }}
               >
-                <Text style={styles.primaryButtonText}>Give Feedback Now</Text>
+                <Text style={styles.primaryButtonText}>Continue to Payment</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

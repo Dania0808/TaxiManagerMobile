@@ -848,6 +848,7 @@ export const passengerStyles = StyleSheet.create({
 
   orderButtonWrap: {
     marginTop: 12,
+    gap: 12,
   },
 
   primaryButton: {
@@ -1530,6 +1531,16 @@ export const passengerStyles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  paymentHeroIconWrap: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    marginBottom: 14,
+  },
+
   feedbackHeroTitle: {
     fontSize: 24,
     fontWeight: '800',
@@ -1631,6 +1642,198 @@ export const passengerStyles = StyleSheet.create({
     minHeight: 110,
     textAlignVertical: 'top',
     paddingTop: 14,
+  },
+
+  paymentBreakdownCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: '#f9fafb',
+    marginBottom: 14,
+    gap: 10,
+  },
+
+  paymentBreakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  paymentBreakdownLabel: {
+    color: '#6b7280',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  paymentBreakdownValue: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  paymentBreakdownDivider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+  },
+
+  paymentTotalLabel: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  paymentTotalValue: {
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  paymentActionsWrap: {
+    gap: 14,
+  },
+
+  paymentHeaderCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+
+  paymentHeaderTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+
+  paymentHeaderEyebrow: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 6,
+  },
+
+  paymentHeaderTitle: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '800',
+  },
+
+  paymentHeaderSubtitle: {
+    color: '#cbd5e1',
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8,
+  },
+
+  paymentHeaderIconBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  paymentQuickStatsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 18,
+  },
+
+  paymentQuickStatCard: {
+    flex: 1,
+    backgroundColor: '#111c31',
+    borderWidth: 1,
+    borderColor: '#243047',
+    borderRadius: 18,
+    padding: 14,
+  },
+
+  paymentQuickStatLabel: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+
+  paymentQuickStatValue: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '800',
+  },
+
+  paymentQuickStatHint: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    marginTop: 5,
+  },
+
+  paymentSummaryCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 20,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+
+  paymentRideRoute: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 18,
+    backgroundColor: '#f8fafc',
+    padding: 14,
+    marginTop: 12,
+    marginBottom: 14,
+    gap: 10,
+  },
+
+  paymentRouteLabel: {
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  paymentRouteValue: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  paymentRouteDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#d1d5db',
+    marginLeft: 2,
+  },
+
+  successBannerSoft: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+
+  warningBannerSoft: {
+    backgroundColor: '#fff8db',
+    borderColor: '#fde68a',
   },
 
   rideSummaryStrip: {

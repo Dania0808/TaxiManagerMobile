@@ -3,7 +3,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios/dist/browser/axios.cjs';
 
 const configuredBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
-const fallbackBaseUrl = 'http://localhost:5213/api';
+const fallbackBaseUrl = 'http://10.0.0.13:5213/api';
 const BASE_URL = configuredBaseUrl || fallbackBaseUrl;
 
 if (!configuredBaseUrl) {

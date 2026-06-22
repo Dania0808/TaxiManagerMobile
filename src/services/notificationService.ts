@@ -6,10 +6,17 @@ import { Platform } from 'react-native';
 import api from './api';
 
 const REGISTERED_PUSH_TOKEN_KEY = 'registeredPushToken';
+const REGISTERED_PUSH_REGISTRATION_KEY = 'registeredPushRegistration';
 
 type StoredUser = {
   id?: number;
   role?: string;
+};
+
+type StoredPushRegistration = {
+  userId: number;
+  role: string;
+  pushToken: string;
 };
 
 type NotificationRouteTarget =
@@ -17,8 +24,12 @@ type NotificationRouteTarget =
   | '/(main)/passenger-tracking'
   | '/(main)/passenger-feedback'
   | '/(main)/driver'
-  | '/(main)/ai'
-  | null;
+  | '/(main)/ai';
+
+type NotificationNavigationPayload = {
+  pathname: NotificationRouteTarget;
+  params: Record<string, string>;
+};
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -63,28 +74,52 @@ async function getStoredUser(): Promise<StoredUser | null> {
   }
 }
 
+async function getStoredPushRegistration(): Promise<StoredPushRegistration | null> {
+  const rawRegistration = await AsyncStorage.getItem(REGISTERED_PUSH_REGISTRATION_KEY);
+  if (!rawRegistration) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawRegistration) as StoredPushRegistration;
+  } catch {
+    return null;
+  }
+}
+
 function getNotificationData(
   response: Notifications.NotificationResponse | null
 ): Record<string, unknown> | null {
   return response?.notification.request.content.data ?? null;
 }
 
-function resolveNotificationRouteTarget(
+export function resolveNotificationRouteTarget(
   data: Record<string, unknown> | null
-): NotificationRouteTarget {
+): NotificationNavigationPayload | null {
   const target = typeof data?.target === 'string' ? data.target : '';
+  const event =
+    typeof data?.event === 'string'
+      ? data.event
+      : typeof data?.status === 'string'
+        ? data.status
+        : 'notification';
+  const params = {
+    notificationRefreshAt: `${Date.now()}`,
+    notificationEvent: event,
+    notificationTarget: target,
+  };
 
   switch (target) {
     case 'passenger_tracking':
-      return '/(main)/passenger-tracking';
+      return { pathname: '/(main)/passenger-tracking', params };
     case 'passenger_feedback':
-      return '/(main)/passenger-feedback';
+      return { pathname: '/(main)/passenger-feedback', params };
     case 'passenger_home':
-      return '/(main)/passenger';
+      return { pathname: '/(main)/passenger', params };
     case 'driver_home':
-      return '/(main)/driver';
+      return { pathname: '/(main)/driver', params };
     case 'ai_home':
-      return '/(main)/ai';
+      return { pathname: '/(main)/ai', params };
     default:
       return null;
   }
@@ -93,9 +128,11 @@ function resolveNotificationRouteTarget(
 export function addNotificationTapListener(onNavigate: (route: Href) => void) {
   const subscription = Notifications.addNotificationResponseReceivedListener(
     (response) => {
-      const route = resolveNotificationRouteTarget(getNotificationData(response));
-      if (route) {
-        onNavigate(route);
+      const navigationPayload = resolveNotificationRouteTarget(
+        getNotificationData(response)
+      );
+      if (navigationPayload) {
+        onNavigate(navigationPayload as Href);
       }
     }
   );
@@ -107,10 +144,12 @@ export async function handleLastNotificationTap(
   onNavigate: (route: Href) => void
 ) {
   const response = await Notifications.getLastNotificationResponseAsync();
-  const route = resolveNotificationRouteTarget(getNotificationData(response));
+  const navigationPayload = resolveNotificationRouteTarget(
+    getNotificationData(response)
+  );
 
-  if (route) {
-    onNavigate(route);
+  if (navigationPayload) {
+    onNavigate(navigationPayload as Href);
   }
 }
 
@@ -152,9 +191,13 @@ export async function registerPushNotificationsAsync() {
 
   const expoPushToken = await Notifications.getExpoPushTokenAsync({ projectId });
   const pushToken = expoPushToken.data;
-  const alreadyRegisteredToken = await AsyncStorage.getItem(REGISTERED_PUSH_TOKEN_KEY);
+  const previousRegistration = await getStoredPushRegistration();
+  const matchesPreviousRegistration =
+    previousRegistration?.pushToken === pushToken &&
+    previousRegistration?.userId === storedUser.id &&
+    previousRegistration?.role === storedUser.role;
 
-  if (alreadyRegisteredToken === pushToken) {
+  if (matchesPreviousRegistration) {
     return { ok: true, token: pushToken, skipped: true as const };
   }
 
@@ -167,6 +210,14 @@ export async function registerPushNotificationsAsync() {
   });
 
   await AsyncStorage.setItem(REGISTERED_PUSH_TOKEN_KEY, pushToken);
+  await AsyncStorage.setItem(
+    REGISTERED_PUSH_REGISTRATION_KEY,
+    JSON.stringify({
+      userId: storedUser.id,
+      role: storedUser.role,
+      pushToken,
+    })
+  );
 
   return { ok: true, token: pushToken, skipped: false as const };
 }
@@ -186,5 +237,6 @@ export async function removePushNotificationsAsync() {
     });
   } finally {
     await AsyncStorage.removeItem(REGISTERED_PUSH_TOKEN_KEY);
+    await AsyncStorage.removeItem(REGISTERED_PUSH_REGISTRATION_KEY);
   }
 }

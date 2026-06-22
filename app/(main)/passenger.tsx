@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Redirect, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -19,13 +19,18 @@ import PassengerMapCard from '../../src/components/passenger/PassengerMapCard';
 import RideDetailsCard from '../../src/components/passenger/RideDetailsCard';
 import CancelRideModal from '../../src/components/shared/CancelRideModal';
 import { usePassengerScreen } from '../../src/hooks/usePassengerScreen';
+import { getRidePaymentStatus } from '../../src/services/passengerService';
 import { passengerStyles as styles } from '../../src/styles/passengerStyles';
 import { isCancelledRideStatus } from '../../src/types/passenger';
 
 export default function PassengerScreen() {
   const router = useRouter();
+  const { notificationRefreshAt } = useLocalSearchParams<{
+    notificationRefreshAt?: string;
+  }>();
   const [isRideFormExpanded, setIsRideFormExpanded] = useState(true);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCompletedRidePaid, setIsCompletedRidePaid] = useState(false);
   const {
     user,
     loadingUser,
@@ -69,8 +74,53 @@ export default function PassengerScreen() {
     setIsShared,
     handleCreateRide,
     handleGetCurrentRide,
+    handleGetPendingFeedbackRide,
     handleCancelRide,
   } = usePassengerScreen();
+
+  useEffect(() => {
+    if (!notificationRefreshAt) return;
+
+    handleGetCurrentRide();
+    handleGetPendingFeedbackRide();
+  }, [notificationRefreshAt, handleGetCurrentRide, handleGetPendingFeedbackRide]);
+
+  useEffect(() => {
+    const syncCompletedRidePaymentFlow = async () => {
+      if (
+        currentRide?.status !== 'Completed' ||
+        !pendingFeedbackRide?.id ||
+        !user?.passengerId
+      ) {
+        setIsCompletedRidePaid(false);
+        return;
+      }
+
+      try {
+        const paymentStatus = await getRidePaymentStatus(
+          pendingFeedbackRide.id,
+          user.passengerId
+        );
+        const isPaid = paymentStatus?.status?.toLowerCase() === 'paid';
+        setIsCompletedRidePaid(isPaid);
+
+        if (!isPaid) {
+          router.replace({
+            pathname: '/(main)/passenger-payment',
+            params: { rideId: String(pendingFeedbackRide.id) },
+          });
+        }
+      } catch {
+        setIsCompletedRidePaid(false);
+        router.replace({
+          pathname: '/(main)/passenger-payment',
+          params: { rideId: String(pendingFeedbackRide.id) },
+        });
+      }
+    };
+
+    syncCompletedRidePaymentFlow();
+  }, [currentRide?.status, pendingFeedbackRide?.id, router, user?.passengerId]);
 
   if (notLoggedIn) {
     return <Redirect href="/(auth)" />;
@@ -89,7 +139,6 @@ export default function PassengerScreen() {
     ? `passenger_profile_image_url_${user.passengerId}`
     : undefined;
   const hasCompletedRide = currentRide?.status === 'Completed';
-  const shouldShowFeedbackPrompt = hasCompletedRide && !!pendingFeedbackRide;
   const shouldShowCurrentRideCard =
     !!currentRide &&
     currentRide.status !== 'Pending' &&
@@ -98,7 +147,7 @@ export default function PassengerScreen() {
   const shouldShowOrderPlacedCard =
     (currentRide?.status === 'Pending' || orderPlacedRide?.status === 'Pending') &&
     !shouldShowCurrentRideCard &&
-    !shouldShowFeedbackPrompt;
+    !hasCompletedRide;
   const isLiveRidePhase =
     currentRide?.status === 'Accepted' ||
     currentRide?.status === 'OnTheWay' ||
@@ -113,7 +162,12 @@ export default function PassengerScreen() {
         ]
       : ['Changed my mind', 'Booked by mistake', 'Found another ride'];
   const isPlanningState =
-    !shouldShowOrderPlacedCard && !shouldShowFeedbackPrompt && !currentRide;
+    !shouldShowOrderPlacedCard && !currentRide;
+  const shouldShowPassengerMessageBanner =
+    !!message &&
+    (message.includes('missing') ||
+      message.toLowerCase().includes('failed') ||
+      message.toLowerCase().includes('error'));
   const pendingRideSummary =
     orderPlacedRide?.rideSummary ??
     (currentRide
@@ -139,7 +193,7 @@ export default function PassengerScreen() {
         profileImageStorageKey={profileImageStorageKey}
       />
 
-      {message ? (
+      {shouldShowPassengerMessageBanner ? (
         <View
           style={[
             styles.inlineBanner,
@@ -193,49 +247,6 @@ export default function PassengerScreen() {
               isCancelling={isCancellingRide}
             />
           </View>
-        ) : shouldShowFeedbackPrompt ? (
-          <View style={styles.sectionSpacing}>
-            <View style={styles.feedbackHeroCard}>
-              <View style={styles.feedbackHeroIconWrap}>
-                <MaterialCommunityIcons
-                  name="star-circle-outline"
-                  size={28}
-                  color="#ca8a04"
-                />
-              </View>
-              <Text style={styles.feedbackHeroTitle}>Rate Your Ride</Text>
-              <Text style={styles.feedbackHeroSubtitle}>
-                Your trip is complete. Leave quick feedback now and earn coins for your next rides.
-              </Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Completed Ride Ready For Review</Text>
-              <Text style={styles.helperText}>
-                Review the finished trip and share a short rating for your driver.
-              </Text>
-
-              <View style={styles.feedbackTripSummary}>
-                <Text style={styles.feedbackTripRowLabel}>
-                  Ride #{pendingFeedbackRide.id}
-                </Text>
-                <Text style={styles.feedbackTripRowValue}>
-                  {pendingFeedbackRide.pickupLocation || 'Unknown pickup'}
-                </Text>
-                <Text style={styles.feedbackTripRowArrow}>to</Text>
-                <Text style={styles.feedbackTripRowValue}>
-                  {pendingFeedbackRide.destination || 'Unknown destination'}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => router.push('/(main)/passenger-feedback')}
-              >
-                <Text style={styles.primaryButtonText}>Rate This Ride</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         ) : currentRide && !hasCompletedRide ? (
           <View style={styles.sectionSpacing}>
             {isLiveRidePhase ? (
@@ -260,6 +271,26 @@ export default function PassengerScreen() {
               }
               isCancelling={isCancellingRide}
             />
+          </View>
+        ) : hasCompletedRide && pendingFeedbackRide && isCompletedRidePaid ? (
+          <View style={styles.sectionSpacing}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Ride completed</Text>
+              <Text style={styles.helperText}>
+                Payment is already confirmed. If you want, you can still leave optional feedback from the payment flow.
+              </Text>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(main)/passenger-feedback',
+                    params: { rideId: String(pendingFeedbackRide.id) },
+                  })
+                }
+              >
+                <Text style={styles.secondaryButtonText}>Open Feedback</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <KeyboardAvoidingView

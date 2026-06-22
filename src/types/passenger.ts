@@ -64,6 +64,24 @@ export type PendingFeedbackRideType = {
   driverId?: number;
 };
 
+export type RidePaymentStatusType = {
+  rideId: number;
+  passengerId: number;
+  amount: number;
+  currencyCode: string;
+  status: string;
+  pricingModel: string;
+  baseFare?: number | null;
+  distanceKm?: number | null;
+  durationMinutes?: number | null;
+  payPalOrderId?: string | null;
+  payPalCaptureId?: string | null;
+  failureReason?: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  paidAtUtc?: string | null;
+};
+
 export type RideSummary = {
   from: string;
   to: string;

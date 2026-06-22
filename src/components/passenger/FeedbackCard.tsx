@@ -17,6 +17,7 @@ type FeedbackCardProps = {
   comment: string;
   setComment: (value: string) => void;
   onSubmitFeedback: () => void;
+  onSkipFeedback?: () => void;
   isSubmitting?: boolean;
 };
 
@@ -35,6 +36,7 @@ export default function FeedbackCard({
   comment,
   setComment,
   onSubmitFeedback,
+  onSkipFeedback,
   isSubmitting = false,
 }: FeedbackCardProps) {
   if (!pendingFeedbackRide) return null;
@@ -44,9 +46,9 @@ export default function FeedbackCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Give Feedback & Earn Coins</Text>
+      <Text style={styles.cardTitle}>Rate This Ride</Text>
       <Text style={styles.helperText}>
-        Help us improve and receive coins that count like shekels in future pricing.
+        Feedback is optional. Share a quick rating now, or skip and come back later.
       </Text>
 
       <View style={styles.feedbackTripSummary}>
@@ -131,6 +133,12 @@ export default function FeedbackCard({
       />
 
       <View style={styles.orderButtonWrap}>
+        {onSkipFeedback ? (
+          <TouchableOpacity style={styles.secondaryButton} onPress={onSkipFeedback}>
+            <Text style={styles.secondaryButtonText}>Skip for Now</Text>
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity
           style={[
             styles.primaryButton,
@@ -140,9 +148,7 @@ export default function FeedbackCard({
           disabled={isSubmitting}
         >
           <Text style={styles.primaryButtonText}>
-            {isSubmitting
-              ? 'Sending feedback...'
-              : 'Submit Feedback and Earn Coins'}
+            {isSubmitting ? 'Sending feedback...' : 'Submit Feedback'}
           </Text>
         </TouchableOpacity>
       </View>

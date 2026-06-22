@@ -341,6 +341,40 @@ export const driverStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  paymentStatusCard: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
+  },
+  paymentStatusCardPaid: {
+    borderColor: '#bbf7d0',
+    backgroundColor: '#f0fdf4',
+  },
+  paymentStatusCardPending: {
+    borderColor: '#fde68a',
+    backgroundColor: '#fffbeb',
+  },
+  paymentStatusEyebrow: {
+    color: '#6b7280',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 5,
+  },
+  paymentStatusTitle: {
+    color: '#111827',
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  paymentStatusSubtitle: {
+    color: '#4b5563',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+  },
   tripInfoGrid: {
     flexDirection: 'column',
     gap: 10,

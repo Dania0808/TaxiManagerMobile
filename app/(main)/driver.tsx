@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   ScrollView,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import AppNavbar from '../../src/components/AppNavbar';
@@ -55,6 +55,23 @@ function formatWait(minutes: number | null | undefined) {
 function formatTripDuration(minutes: number | null | undefined) {
   if (minutes == null) return 'Trip duration unavailable';
   return `${minutes} min estimated trip`;
+}
+
+function formatCurrencyAmount(
+  amount: number | null | undefined,
+  currencyCode?: string | null
+) {
+  if (amount == null || !Number.isFinite(amount)) return 'Unavailable';
+
+  const normalizedCurrency = (currencyCode || 'ILS').toUpperCase();
+  if (normalizedCurrency === 'ILS') {
+    return `${String.fromCharCode(0x20aa)}${amount.toFixed(2)}`;
+  }
+  if (normalizedCurrency === 'ILS') {
+    return `₪${amount.toFixed(2)}`;
+  }
+
+  return `${normalizedCurrency} ${amount.toFixed(2)}`;
 }
 
 function estimateMinutesFromDistance(
@@ -214,7 +231,7 @@ function getDriverPhaseCopy(phase: string) {
     return {
       title: 'Ride complete',
       subtitle:
-        'Refresh once to clear the finished trip and return to waiting mode for the next request.',
+        'Wait for the passenger payment confirmation, then end the trip and return to waiting mode.',
     };
   }
 
@@ -267,7 +284,7 @@ function getTripStage(
   if (status === 'Completed') {
     return {
       title: 'Trip Complete',
-      subtitle: 'This ride is complete. Refresh to return to waiting mode.',
+      subtitle: 'This ride is complete. Keep the trip open until passenger payment is confirmed.',
       actionLabel: null,
       nextStatus: null,
       targetLabel: 'Completed',
@@ -284,6 +301,9 @@ function getTripStage(
 }
 
 export default function DriverScreen() {
+  const { notificationRefreshAt } = useLocalSearchParams<{
+    notificationRefreshAt?: string;
+  }>();
   const [selectedOpenRideId, setSelectedOpenRideId] = useState<number | null>(null);
   const [showAllRelevantRides, setShowAllRelevantRides] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -316,6 +336,7 @@ export default function DriverScreen() {
     activeClaimRideId,
     isUpdatingRideStatus,
     isCancellingRide,
+    isClosingCompletedRide,
     handleAcceptRide,
     handleClaimOpenRideRequest,
     handleDeclineIncomingOffer,
@@ -326,7 +347,15 @@ export default function DriverScreen() {
     handleRefreshTracking,
     handleOpenExternalNavigation,
     handleCancelCurrentRide,
+    handleCloseCompletedRide,
   } = useDriverScreen();
+
+  useEffect(() => {
+    if (!notificationRefreshAt) return;
+
+    handleGetCurrentRide();
+    handleGetOpenRideRequests();
+  }, [notificationRefreshAt, handleGetCurrentRide, handleGetOpenRideRequests]);
 
   if (notLoggedIn) {
     return <Redirect href="/(auth)" />;
@@ -452,6 +481,15 @@ export default function DriverScreen() {
       : null;
   const selectedRideTripEstimateMinutes =
     selectedOpenRide != null ? getEstimatedTripMinutesForRide(selectedOpenRide) : null;
+  const shouldShowDriverMessageBanner =
+    !!message &&
+    (message.includes('missing') ||
+      message.toLowerCase().includes('failed') ||
+      message.toLowerCase().includes('error'));
+  const driverPaymentStatus = (currentRide?.paymentStatus || '').toLowerCase();
+  const isDriverPaymentConfirmed = driverPaymentStatus === 'paid';
+  const isDriverWaitingForPayment =
+    currentRide?.status === 'Completed' && !isDriverPaymentConfirmed;
 
   return (
     <View style={styles.screen}>
@@ -538,7 +576,7 @@ export default function DriverScreen() {
           </Text>
         </View>
 
-        {message && message !== 'You are online and ready for new nearby ride requests.' ? (
+        {shouldShowDriverMessageBanner ? (
           <View
             style={[
               styles.globalBanner,
@@ -683,6 +721,34 @@ export default function DriverScreen() {
               <Text style={styles.tripStageSubtitle}>{tripStage.subtitle}</Text>
             </View>
 
+            <View
+              style={[
+                styles.paymentStatusCard,
+                isDriverPaymentConfirmed
+                  ? styles.paymentStatusCardPaid
+                  : styles.paymentStatusCardPending,
+              ]}
+            >
+              <Text style={styles.paymentStatusEyebrow}>Passenger payment</Text>
+              <Text style={styles.paymentStatusTitle}>
+                {isDriverPaymentConfirmed
+                  ? 'Payment confirmed'
+                  : isDriverWaitingForPayment
+                    ? 'Waiting for passenger payment'
+                    : 'Payment will be requested after completion'}
+              </Text>
+              <Text style={styles.paymentStatusSubtitle}>
+                {isDriverPaymentConfirmed
+                  ? `Passenger payment was completed successfully. Amount received: ${formatCurrencyAmount(
+                      currentRide?.paymentAmount,
+                      currentRide?.paymentCurrencyCode
+                    )}.`
+                  : isDriverWaitingForPayment
+                    ? 'Keep the passenger informed and wait here until the app confirms the payment.'
+                    : 'When this ride is completed, the passenger will pay in the app before feedback.'}
+              </Text>
+            </View>
+
             <View style={styles.tripInfoGrid}>
               <View style={styles.tripInfoBlock}>
                 <Text style={styles.cardBodyTitle}>Passenger</Text>
@@ -717,6 +783,20 @@ export default function DriverScreen() {
                   {formatTripDuration(currentRideTripEstimateMinutes ?? estimatedTripDurationMinutes)}
                 </Text>
               </View>
+
+              <View style={styles.tripInfoBlockWide}>
+                <Text style={styles.cardBodyTitle}>Payment</Text>
+                <Text style={styles.cardBodyValue}>
+                  {isDriverPaymentConfirmed
+                    ? `Paid • ${formatCurrencyAmount(
+                        currentRide.paymentAmount,
+                        currentRide.paymentCurrencyCode
+                      )}`
+                    : currentRide.status === 'Completed'
+                      ? 'Pending passenger payment'
+                      : 'Not due yet'}
+                </Text>
+              </View>
             </View>
 
             <View style={styles.metaRow}>
@@ -748,6 +828,21 @@ export default function DriverScreen() {
               >
                 <Text style={styles.actionButtonText}>
                   {isUpdatingRideStatus ? 'Updating Ride...' : tripStage.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {currentRide.status === 'Completed' && isDriverPaymentConfirmed ? (
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  isClosingCompletedRide && styles.actionButtonDisabled,
+                ]}
+                onPress={handleCloseCompletedRide}
+                disabled={isClosingCompletedRide}
+              >
+                <Text style={styles.actionButtonText}>
+                  {isClosingCompletedRide ? 'Closing Trip...' : 'End Trip and Return Online'}
                 </Text>
               </TouchableOpacity>
             ) : null}

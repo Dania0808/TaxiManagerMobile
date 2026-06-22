@@ -1,4 +1,5 @@
 import { RideTrackingSnapshot } from '../types/liveTracking';
+import { RidePaymentStatusType } from '../types/passenger';
 import api from './api';
 
 export async function getPassengerCoinBalance(passengerId: number) {
@@ -22,6 +23,55 @@ export async function getPassengerCurrentRide(passengerId: number) {
 export async function getPassengerPendingFeedbackRide(passengerId: number) {
   const response = await api.get(`/Rides/pending-feedback/${passengerId}`);
   return response.data;
+}
+
+export async function getRidePaymentStatus(
+  rideId: number,
+  passengerId: number
+): Promise<RidePaymentStatusType | null> {
+  try {
+    const response = await api.get(`/Payments/ride/${rideId}`, {
+      params: { passengerId },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function createRidePaymentOrder(payload: {
+  rideId: number;
+  passengerId: number;
+}) {
+  const response = await api.post('/Payments/create-order', payload);
+  return response.data as {
+    rideId: number;
+    payPalOrderId: string;
+    approvalUrl: string;
+    status: string;
+    amount: number;
+    currencyCode: string;
+  };
+}
+
+export async function captureRidePaymentOrder(payload: {
+  rideId: number;
+  passengerId: number;
+  payPalOrderId: string;
+}) {
+  const response = await api.post('/Payments/capture-order', payload);
+  return response.data as {
+    rideId: number;
+    payPalOrderId: string;
+    payPalCaptureId: string;
+    status: string;
+    amount: number;
+    currencyCode: string;
+  };
 }
 
 export async function createPassengerRide(payload: {
@@ -54,6 +104,14 @@ export async function submitPassengerRideFeedback(payload: {
   comment: string;
 }) {
   const response = await api.post('/Rides/feedback', payload);
+  return response.data;
+}
+
+export async function skipPassengerRideFeedback(payload: {
+  rideId: number;
+  passengerId: number;
+}) {
+  const response = await api.post('/Rides/feedback/skip', payload);
   return response.data;
 }
 

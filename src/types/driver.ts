@@ -71,6 +71,10 @@ export type DriverCurrentRideType = {
   createdAt?: string | null;
   estimatedTripDurationMinutes?: number | null;
   estimatedPickupMinutes?: number | null;
+  paymentStatus?: string | null;
+  paymentAmount?: number | null;
+  paymentCurrencyCode?: string | null;
+  paymentPaidAtUtc?: string | null;
 };
 
 export type DriverNavigationTarget = {

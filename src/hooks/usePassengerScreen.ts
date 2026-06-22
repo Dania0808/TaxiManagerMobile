@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useLiveLocation } from './useLiveLocation';
 import {
@@ -291,7 +291,7 @@ export function usePassengerScreen() {
     }
   };
 
-  const handleGetCoinBalance = async () => {
+  const handleGetCoinBalance = useCallback(async () => {
     if (!passengerId) return;
 
     try {
@@ -300,9 +300,9 @@ export function usePassengerScreen() {
     } catch (error: any) {
       setMessage(error?.response?.data || 'Failed to load coin balance.');
     }
-  };
+  }, [passengerId]);
 
-  const handleGetCurrentRide = async () => {
+  const handleGetCurrentRide = useCallback(async () => {
     if (!passengerId) return;
 
     try {
@@ -328,9 +328,9 @@ export function usePassengerScreen() {
     } finally {
       setIsRefreshingRide(false);
     }
-  };
+  }, [passengerId]);
 
-  const handleGetPendingFeedbackRide = async () => {
+  const handleGetPendingFeedbackRide = useCallback(async () => {
     if (!passengerId) return;
 
     try {
@@ -339,7 +339,7 @@ export function usePassengerScreen() {
     } catch {
       setPendingFeedbackRide(null);
     }
-  };
+  }, [passengerId]);
 
   const searchPlaces = async (query: string, type: 'pickup' | 'destination') => {
     if (query.trim().length < 3) {
@@ -539,7 +539,7 @@ export function usePassengerScreen() {
       });
       setCurrentRide(currentRideData);
       setTrackingUnavailable(false);
-      setMessage('Your ride request has been placed successfully.');
+      setMessage('');
       setIsSearchingDriver(false);
       resetRideForm();
     } catch (error: any) {
@@ -552,7 +552,7 @@ export function usePassengerScreen() {
     }
   };
 
-  const handleRefreshTrackingSnapshot = async () => {
+  const handleRefreshTrackingSnapshot = useCallback(async () => {
     if (!currentRide?.id) return;
 
     try {
@@ -570,7 +570,7 @@ export function usePassengerScreen() {
     } finally {
       setIsRefreshingTracking(false);
     }
-  };
+  }, [currentRide?.id]);
 
   const handleSubmitFeedback = async () => {
     if (!passengerId || !pendingFeedbackRide) {
@@ -594,7 +594,7 @@ export function usePassengerScreen() {
         comment,
       });
 
-      setMessage(data);
+      setMessage('');
       setRating('5');
       setWasDriverPolite(false);
       setWasDriverOnTime(false);
@@ -641,7 +641,7 @@ export function usePassengerScreen() {
         note,
       });
 
-      setMessage(typeof data === 'string' ? data : 'Ride cancelled successfully.');
+      setMessage('');
       setCurrentRide(null);
       setOrderPlacedRide(null);
       setTrackingSnapshot(null);
@@ -721,7 +721,7 @@ export function usePassengerScreen() {
       (previousStatus === 'Accepted' || previousStatus === 'OnTheWay') &&
       nextStatus === 'Pending'
     ) {
-      setMessage('Your previous driver cancelled the ride. We are matching you with another driver now.');
+      setMessage('');
       setIsSearchingDriver(true);
     }
 
@@ -814,6 +814,7 @@ export function usePassengerScreen() {
     setLuggageHandlingRating,
     setComment,
     handleGetCurrentRide,
+    handleGetPendingFeedbackRide,
     handleRefreshTrackingSnapshot,
     handleCreateRide,
     handleDismissOrderPlaced,
