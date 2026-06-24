@@ -25,12 +25,12 @@ import { isCancelledRideStatus } from '../../src/types/passenger';
 
 export default function PassengerScreen() {
   const router = useRouter();
-  const { notificationRefreshAt } = useLocalSearchParams<{
+  const { notificationRefreshAt, completedFlowResetAt } = useLocalSearchParams<{
     notificationRefreshAt?: string;
+    completedFlowResetAt?: string;
   }>();
   const [isRideFormExpanded, setIsRideFormExpanded] = useState(true);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [isCompletedRidePaid, setIsCompletedRidePaid] = useState(false);
   const {
     user,
     loadingUser,
@@ -44,7 +44,6 @@ export default function PassengerScreen() {
     pickupLoading,
     destinationLoading,
     rideType,
-    isShared,
     scheduledTime,
     passengerCount,
     luggageCount,
@@ -60,6 +59,8 @@ export default function PassengerScreen() {
     isCreatingRide,
     isRefreshingRide,
     isCancellingRide,
+    rideFareEstimate,
+    isLoadingRideFareEstimate,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -71,11 +72,11 @@ export default function PassengerScreen() {
     setLuggageCount,
     setRideType,
     setScheduledTime,
-    setIsShared,
     handleCreateRide,
     handleGetCurrentRide,
     handleGetPendingFeedbackRide,
     handleCancelRide,
+    clearCompletedRideFlowState,
   } = usePassengerScreen();
 
   useEffect(() => {
@@ -86,13 +87,18 @@ export default function PassengerScreen() {
   }, [notificationRefreshAt, handleGetCurrentRide, handleGetPendingFeedbackRide]);
 
   useEffect(() => {
+    if (!completedFlowResetAt) return;
+
+    clearCompletedRideFlowState();
+  }, [completedFlowResetAt, clearCompletedRideFlowState]);
+
+  useEffect(() => {
     const syncCompletedRidePaymentFlow = async () => {
       if (
         currentRide?.status !== 'Completed' ||
         !pendingFeedbackRide?.id ||
         !user?.passengerId
       ) {
-        setIsCompletedRidePaid(false);
         return;
       }
 
@@ -102,7 +108,6 @@ export default function PassengerScreen() {
           user.passengerId
         );
         const isPaid = paymentStatus?.status?.toLowerCase() === 'paid';
-        setIsCompletedRidePaid(isPaid);
 
         if (!isPaid) {
           router.replace({
@@ -111,7 +116,6 @@ export default function PassengerScreen() {
           });
         }
       } catch {
-        setIsCompletedRidePaid(false);
         router.replace({
           pathname: '/(main)/passenger-payment',
           params: { rideId: String(pendingFeedbackRide.id) },
@@ -178,7 +182,6 @@ export default function PassengerScreen() {
             currentRide.rideType === 'Scheduled' ? 'Scheduled' : 'Immediate',
           passengers: '1',
           luggage: '0',
-          shared: currentRide.isShared ? 'Yes' : 'No',
           scheduledTime: '-',
         }
       : rideSummary);
@@ -272,26 +275,6 @@ export default function PassengerScreen() {
               isCancelling={isCancellingRide}
             />
           </View>
-        ) : hasCompletedRide && pendingFeedbackRide && isCompletedRidePaid ? (
-          <View style={styles.sectionSpacing}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Ride completed</Text>
-              <Text style={styles.helperText}>
-                Payment is already confirmed. If you want, you can still leave optional feedback from the payment flow.
-              </Text>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() =>
-                  router.push({
-                    pathname: '/(main)/passenger-feedback',
-                    params: { rideId: String(pendingFeedbackRide.id) },
-                  })
-                }
-              >
-                <Text style={styles.secondaryButtonText}>Open Feedback</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         ) : (
           <KeyboardAvoidingView
             style={styles.rideComposerContainer}
@@ -321,8 +304,6 @@ export default function PassengerScreen() {
                   setRideType={setRideType}
                   scheduledTime={scheduledTime}
                   setScheduledTime={setScheduledTime}
-                  isShared={isShared}
-                  setIsShared={setIsShared}
                   onReviewRide={handleReviewRide}
                 />
               ) : (
@@ -358,6 +339,8 @@ export default function PassengerScreen() {
         <PassengerBottomSheet
           rideSummary={rideSummary}
           rideType={rideType}
+          rideFareEstimate={rideFareEstimate}
+          isLoadingRideFareEstimate={isLoadingRideFareEstimate}
           pickupCoords={pickupCoords}
           destinationCoords={destinationCoords}
           onBack={handleCloseReviewRide}

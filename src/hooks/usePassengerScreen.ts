@@ -12,6 +12,7 @@ import {
   getPassengerCoinBalance,
   getPassengerCurrentRide,
   getPassengerPendingFeedbackRide,
+  getRideFareEstimate,
   getPassengerRideTracking,
   submitPassengerRideFeedback,
   updatePassengerLiveLocation,
@@ -23,6 +24,7 @@ import {
   OrderPlacedRideType,
   PendingFeedbackRideType,
   PlaceSuggestion,
+  RideFareEstimateType,
   RideType,
   StoredUser,
   isCancelledRideStatus,
@@ -46,7 +48,6 @@ export function usePassengerScreen() {
   const [pickupSelected, setPickupSelected] = useState(false);
   const [destinationSelected, setDestinationSelected] = useState(false);
   const [rideType, setRideType] = useState<RideType>('Immediate');
-  const [isShared, setIsShared] = useState(false);
   const [scheduledTime, setScheduledTime] = useState('');
   const [passengerCount, setPassengerCount] = useState('1');
   const [luggageCount, setLuggageCount] = useState('0');
@@ -73,6 +74,8 @@ export function usePassengerScreen() {
   const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isCancellingRide, setIsCancellingRide] = useState(false);
+  const [rideFareEstimate, setRideFareEstimate] = useState<RideFareEstimateType | null>(null);
+  const [isLoadingRideFareEstimate, setIsLoadingRideFareEstimate] = useState(false);
 
   const passengerId = user?.passengerId ?? null;
   const hasBlockingRide =
@@ -238,7 +241,6 @@ export function usePassengerScreen() {
       rideType,
       passengers: passengerCount || '1',
       luggage: luggageCount || '0',
-      shared: rideType === 'Immediate' ? (isShared ? 'Yes' : 'No') : 'No',
       scheduledTime: rideType === 'Scheduled' ? scheduledTime || 'Not set' : '-',
     }),
     [
@@ -247,7 +249,6 @@ export function usePassengerScreen() {
       rideType,
       passengerCount,
       luggageCount,
-      isShared,
       scheduledTime,
     ]
   );
@@ -407,6 +408,7 @@ export function usePassengerScreen() {
     setPickupLocation(text);
     setPickupSelected(false);
     setPickupCoords(null);
+    setRideFareEstimate(null);
     setReviewRequested(false);
     setIsSearchingDriver(false);
     setOrderPlacedRide(null);
@@ -417,6 +419,7 @@ export function usePassengerScreen() {
     setDestination(text);
     setDestinationSelected(false);
     setDestinationCoords(null);
+    setRideFareEstimate(null);
     setReviewRequested(false);
     setIsSearchingDriver(false);
     setOrderPlacedRide(null);
@@ -468,15 +471,84 @@ export function usePassengerScreen() {
     setDestinationSelected(false);
     setReviewRequested(false);
     setRideType('Immediate');
-    setIsShared(false);
     setScheduledTime('');
     setPassengerCount('1');
     setLuggageCount('0');
+    setRideFareEstimate(null);
+    setIsLoadingRideFareEstimate(false);
   };
 
   const handleDismissOrderPlaced = () => {
     setOrderPlacedRide(null);
   };
+
+  const clearCompletedRideFlowState = useCallback(() => {
+    setMessage('');
+    setPendingFeedbackRide(null);
+    setCurrentRide(null);
+    setOrderPlacedRide(null);
+    setTrackingSnapshot(null);
+    setTrackingUnavailable(false);
+    resetRideForm();
+  }, []);
+
+  const handleGetRideFareEstimate = useCallback(async () => {
+    if (
+      !passengerId ||
+      !pickupCoords ||
+      !destinationCoords ||
+      !pickupSelected ||
+      !destinationSelected
+    ) {
+      setRideFareEstimate(null);
+      setIsLoadingRideFareEstimate(false);
+      return;
+    }
+
+    const parsedPassengerCount = Number(passengerCount || '1');
+    const parsedLuggageCount = Number(luggageCount || '0');
+
+    if (
+      Number.isNaN(parsedPassengerCount) ||
+      parsedPassengerCount < 1 ||
+      Number.isNaN(parsedLuggageCount) ||
+      parsedLuggageCount < 0
+    ) {
+      setRideFareEstimate(null);
+      setIsLoadingRideFareEstimate(false);
+      return;
+    }
+
+    try {
+      setIsLoadingRideFareEstimate(true);
+      const estimate = await getRideFareEstimate({
+        passengerId,
+        pickupLatitude: pickupCoords.latitude,
+        pickupLongitude: pickupCoords.longitude,
+        destinationLatitude: destinationCoords.latitude,
+        destinationLongitude: destinationCoords.longitude,
+        rideType,
+        isShared: false,
+        passengerCount: parsedPassengerCount,
+        luggageCount: parsedLuggageCount,
+      });
+      setRideFareEstimate(estimate);
+    } catch (error) {
+      console.log('RIDE FARE ESTIMATE ERROR:', error);
+      setRideFareEstimate(null);
+    } finally {
+      setIsLoadingRideFareEstimate(false);
+    }
+  }, [
+    passengerId,
+    pickupCoords,
+    destinationCoords,
+    pickupSelected,
+    destinationSelected,
+    passengerCount,
+    luggageCount,
+    rideType,
+  ]);
 
   const handleCreateRide = async () => {
     if (!passengerId) {
@@ -525,7 +597,7 @@ export function usePassengerScreen() {
         destinationLatitude: destinationCoords.latitude,
         destinationLongitude: destinationCoords.longitude,
         rideType,
-        isShared: rideType === 'Immediate' ? isShared : false,
+        isShared: false,
         scheduledTime: rideType === 'Scheduled' ? scheduledTime : null,
         passengerCount: parsedPassengerCount,
         luggageCount: parsedLuggageCount,
@@ -601,11 +673,7 @@ export function usePassengerScreen() {
       setWasVehicleClean(false);
       setLuggageHandlingRating('');
       setComment('');
-      setPendingFeedbackRide(null);
-      setCurrentRide(null);
-      setOrderPlacedRide(null);
-      setTrackingSnapshot(null);
-      setTrackingUnavailable(false);
+      clearCompletedRideFlowState();
 
       await handleGetCoinBalance();
       await handleGetPendingFeedbackRide();
@@ -668,6 +736,17 @@ export function usePassengerScreen() {
     handleGetCurrentRide();
     handleGetPendingFeedbackRide();
   }, [passengerId]);
+
+  useEffect(() => {
+    if (!reviewRequested || hasBlockingRide || isSearchingDriver) return;
+
+    handleGetRideFareEstimate();
+  }, [
+    reviewRequested,
+    hasBlockingRide,
+    isSearchingDriver,
+    handleGetRideFareEstimate,
+  ]);
 
   useEffect(() => {
     if (!currentRide?.id || trackingUnavailable) return;
@@ -770,7 +849,6 @@ export function usePassengerScreen() {
     pickupLoading,
     destinationLoading,
     rideType,
-    isShared,
     scheduledTime,
     passengerCount,
     luggageCount,
@@ -795,6 +873,8 @@ export function usePassengerScreen() {
     isRefreshingTracking,
     isSubmittingFeedback,
     isCancellingRide,
+    rideFareEstimate,
+    isLoadingRideFareEstimate,
     mapRegion,
     rideSummary,
     handlePickupTextChange,
@@ -802,11 +882,11 @@ export function usePassengerScreen() {
     handleSelectPlace,
     handleReviewRide,
     handleCloseReviewRide,
+    clearCompletedRideFlowState,
     setPassengerCount,
     setLuggageCount,
     setRideType,
     setScheduledTime,
-    setIsShared,
     setRating,
     setWasDriverPolite,
     setWasDriverOnTime,
@@ -815,6 +895,7 @@ export function usePassengerScreen() {
     setComment,
     handleGetCurrentRide,
     handleGetPendingFeedbackRide,
+    handleGetRideFareEstimate,
     handleRefreshTrackingSnapshot,
     handleCreateRide,
     handleDismissOrderPlaced,

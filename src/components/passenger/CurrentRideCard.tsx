@@ -128,9 +128,6 @@ export default function CurrentRideCard({
               <Text style={styles.liveRideMiniMetaLabel}>Ride</Text>
               <Text style={styles.liveRideMiniMetaValue}>#{currentRide.id}</Text>
               <Text style={styles.liveRideMiniMetaSecondary}>{currentRide.rideType}</Text>
-              <Text style={styles.liveRideMiniMetaSecondary}>
-                {currentRide.isShared ? 'Shared' : 'Private'}
-              </Text>
             </View>
           </View>
 

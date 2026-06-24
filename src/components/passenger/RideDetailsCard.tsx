@@ -4,7 +4,6 @@ import {
   Modal,
   Platform,
   ScrollView,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -34,8 +33,6 @@ type RideDetailsCardProps = {
   setRideType: (value: RideType) => void;
   scheduledTime: string;
   setScheduledTime: (value: string) => void;
-  isShared: boolean;
-  setIsShared: (value: boolean) => void;
   onReviewRide: () => void;
 };
 
@@ -58,8 +55,6 @@ export default function RideDetailsCard({
   setRideType,
   scheduledTime,
   setScheduledTime,
-  isShared,
-  setIsShared,
   onReviewRide,
 }: RideDetailsCardProps) {
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
@@ -273,27 +268,7 @@ export default function RideDetailsCard({
             </View>
           </View>
 
-          {rideType === 'Immediate' ? (
-            <View style={styles.sharedRideRow}>
-              <View style={styles.sharedRideTextWrap}>
-                <Text style={styles.sharedRideTitle}>Shared ride</Text>
-                <Text style={styles.sharedRideSubtitle}>
-                  Lower-price option when shared matching is available.
-                </Text>
-              </View>
-              <Switch value={isShared} onValueChange={setIsShared} />
-            </View>
-          ) : null}
         </View>
-
-        {rideType === 'Immediate' && isShared ? (
-          <View style={styles.sharedInfoBox}>
-            <Text style={styles.sharedInfoTitle}>Shared ride enabled</Text>
-            <Text style={styles.helperText}>
-              Matching shared rides will appear here after we connect the shared-ride backend.
-            </Text>
-          </View>
-        ) : null}
 
         <View style={styles.orderButtonWrap}>
           <TouchableOpacity style={styles.primaryButton} onPress={onReviewRide}>

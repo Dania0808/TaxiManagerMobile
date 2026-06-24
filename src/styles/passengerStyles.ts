@@ -1343,6 +1343,100 @@ export const passengerStyles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  bottomFareCard: {
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    backgroundColor: '#fffdf5',
+    borderRadius: 20,
+    padding: 14,
+  },
+
+  bottomFareHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  bottomFareIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
+  bottomFareTextWrap: {
+    flex: 1,
+  },
+
+  bottomFareTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 2,
+  },
+
+  bottomFareSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    lineHeight: 18,
+  },
+
+  bottomFareStatsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  bottomFareStatCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#f3e8b3',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+
+  bottomFareStatLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#a16207',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 6,
+  },
+
+  bottomFareStatValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  bottomFareTotalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#f3e8b3',
+    paddingTop: 12,
+  },
+
+  bottomFareTotalLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  bottomFareTotalValue: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
   bottomSheetRow: {
     flexDirection: 'column',
     justifyContent: 'flex-start',
@@ -1692,18 +1786,21 @@ export const passengerStyles = StyleSheet.create({
 
   paymentActionsWrap: {
     gap: 14,
+    marginTop: 4,
   },
 
   paymentHeaderCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#fffdf7',
     borderRadius: 28,
     padding: 22,
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#f3e3a1',
     shadowColor: '#000',
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    elevation: 4,
   },
 
   paymentHeaderTopRow: {
@@ -1714,7 +1811,7 @@ export const passengerStyles = StyleSheet.create({
   },
 
   paymentHeaderEyebrow: {
-    color: '#cbd5e1',
+    color: '#a16207',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1723,13 +1820,13 @@ export const passengerStyles = StyleSheet.create({
   },
 
   paymentHeaderTitle: {
-    color: '#ffffff',
+    color: '#111827',
     fontSize: 28,
     fontWeight: '800',
   },
 
   paymentHeaderSubtitle: {
-    color: '#cbd5e1',
+    color: '#4b5563',
     fontSize: 14,
     lineHeight: 21,
     marginTop: 8,
@@ -1739,9 +1836,11 @@ export const passengerStyles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 18,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#fef3c7',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fde68a',
   },
 
   paymentQuickStatsRow: {
@@ -1752,15 +1851,15 @@ export const passengerStyles = StyleSheet.create({
 
   paymentQuickStatCard: {
     flex: 1,
-    backgroundColor: '#111c31',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#243047',
+    borderColor: '#f3e3a1',
     borderRadius: 18,
     padding: 14,
   },
 
   paymentQuickStatLabel: {
-    color: '#94a3b8',
+    color: '#a16207',
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1769,13 +1868,13 @@ export const passengerStyles = StyleSheet.create({
   },
 
   paymentQuickStatValue: {
-    color: '#ffffff',
+    color: '#111827',
     fontSize: 17,
     fontWeight: '800',
   },
 
   paymentQuickStatHint: {
-    color: '#cbd5e1',
+    color: '#6b7280',
     fontSize: 12,
     marginTop: 5,
   },
@@ -1798,11 +1897,11 @@ export const passengerStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 18,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fcfcfb',
     padding: 14,
     marginTop: 12,
     marginBottom: 14,
-    gap: 10,
+    gap: 12,
   },
 
   paymentRouteLabel: {
@@ -1819,11 +1918,74 @@ export const passengerStyles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  paymentRouteStopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+
+  paymentRouteDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 16,
+  },
+
+  paymentRouteDotPickup: {
+    backgroundColor: '#16a34a',
+  },
+
+  paymentRouteDotDestination: {
+    backgroundColor: '#dc2626',
+  },
+
+  paymentRouteTextWrap: {
+    flex: 1,
+  },
+
   paymentRouteDivider: {
     width: 1,
-    height: 20,
+    height: 18,
     backgroundColor: '#d1d5db',
-    marginLeft: 2,
+    marginLeft: 5,
+  },
+
+  paymentFareHeroCard: {
+    borderRadius: 22,
+    backgroundColor: '#111827',
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginBottom: 14,
+  },
+
+  paymentFareHeroLabel: {
+    color: '#cbd5e1',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+
+  paymentFareHeroValue: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+
+  paymentFareHeroHint: {
+    color: '#e5e7eb',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
+  paymentActionHint: {
+    color: '#6b7280',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: -4,
   },
 
   successBannerSoft: {

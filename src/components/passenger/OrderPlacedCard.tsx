@@ -85,17 +85,12 @@ export default function OrderPlacedCard({
           <Text style={styles.bottomValue}>{rideSummary.rideType}</Text>
         </View>
 
-        {rideSummary.rideType === 'Immediate' ? (
-          <View style={styles.bottomSheetRow}>
-            <Text style={styles.bottomLabel}>Shared Ride</Text>
-            <Text style={styles.bottomValue}>{rideSummary.shared}</Text>
-          </View>
-        ) : (
+        {rideSummary.rideType !== 'Immediate' ? (
           <View style={styles.bottomSheetRow}>
             <Text style={styles.bottomLabel}>Scheduled</Text>
             <Text style={styles.bottomValue}>{rideSummary.scheduledTime}</Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.orderPlacedActions}>

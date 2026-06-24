@@ -41,6 +41,8 @@ export type AvailableRideType = {
   destinationLongitude?: number | null;
   rideType: string;
   isShared: boolean;
+  passengerCount?: number;
+  luggageCount?: number;
   passengerId?: number;
   requestedAt?: string | null;
   createdAt?: string | null;
@@ -48,6 +50,9 @@ export type AvailableRideType = {
   estimatedPickupMinutes?: number | null;
   distanceToPickupKm?: number | null;
   offerExpiresAt?: string | null;
+  fitStatus?: string | null;
+  fitWarnings?: string | null;
+  copilotMessage?: string | null;
 };
 
 export type DriverIncomingOfferType = AvailableRideType & {
@@ -65,12 +70,17 @@ export type DriverCurrentRideType = {
   rideType: string;
   status: RideStatus | string;
   isShared: boolean;
+  passengerCount?: number;
+  luggageCount?: number;
   passengerId: number;
   passengerName?: string | null;
   requestedAt?: string | null;
   createdAt?: string | null;
   estimatedTripDurationMinutes?: number | null;
   estimatedPickupMinutes?: number | null;
+  fitStatus?: string | null;
+  fitWarnings?: string | null;
+  copilotMessage?: string | null;
   paymentStatus?: string | null;
   paymentAmount?: number | null;
   paymentCurrencyCode?: string | null;

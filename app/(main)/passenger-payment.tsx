@@ -203,15 +203,15 @@ export default function PassengerPaymentScreen() {
         <View style={styles.paymentHeaderCard}>
           <View style={styles.paymentHeaderTopRow}>
             <View style={{ flex: 1, paddingRight: 14 }}>
-              <Text style={styles.paymentHeaderEyebrow}>Final step</Text>
-              <Text style={styles.paymentHeaderTitle}>Complete payment</Text>
+              <Text style={styles.paymentHeaderEyebrow}>Final checkout</Text>
+              <Text style={styles.paymentHeaderTitle}>Pay your final fare</Text>
               <Text style={styles.paymentHeaderSubtitle}>
-                Pay for this ride and the driver will instantly see your confirmation.
+                Review the final ride charge in PayPal. As soon as payment is confirmed, your driver will see it immediately.
               </Text>
             </View>
 
             <View style={styles.paymentHeaderIconBadge}>
-              <MaterialCommunityIcons name="credit-card-outline" size={28} color="#ffffff" />
+              <MaterialCommunityIcons name="cash-check" size={28} color="#111827" />
             </View>
           </View>
 
@@ -219,15 +219,15 @@ export default function PassengerPaymentScreen() {
             <View style={styles.paymentQuickStatCard}>
               <Text style={styles.paymentQuickStatLabel}>Ride</Text>
               <Text style={styles.paymentQuickStatValue}>#{pendingFeedbackRide.id}</Text>
-              <Text style={styles.paymentQuickStatHint}>Completed trip</Text>
+              <Text style={styles.paymentQuickStatHint}>Completed with the driver</Text>
             </View>
 
             <View style={styles.paymentQuickStatCard}>
-              <Text style={styles.paymentQuickStatLabel}>Status</Text>
+              <Text style={styles.paymentQuickStatLabel}>Payment state</Text>
               <Text style={styles.paymentQuickStatValue}>
-                {isPaymentComplete ? 'Paid' : paymentStatus?.payPalOrderId ? 'Awaiting confirm' : 'Ready'}
+                {isPaymentComplete ? 'Paid' : paymentStatus?.payPalOrderId ? 'Awaiting approval' : 'Ready to start'}
               </Text>
-              <Text style={styles.paymentQuickStatHint}>PayPal checkout</Text>
+              <Text style={styles.paymentQuickStatHint}>Secure PayPal checkout</Text>
             </View>
           </View>
         </View>
@@ -235,18 +235,42 @@ export default function PassengerPaymentScreen() {
         <View style={styles.paymentSummaryCard}>
           <Text style={styles.cardTitle}>Ride Summary</Text>
           <Text style={styles.helperText}>
-            Review the fare details before finishing the trip payment.
+            This is the final fare for the completed trip.
           </Text>
 
           <View style={styles.paymentRideRoute}>
-            <Text style={styles.paymentRouteLabel}>Pickup</Text>
-            <Text style={styles.paymentRouteValue}>
-              {pendingFeedbackRide.pickupLocation || 'Unknown pickup'}
-            </Text>
+            <View style={styles.paymentRouteStopRow}>
+              <View style={[styles.paymentRouteDot, styles.paymentRouteDotPickup]} />
+              <View style={styles.paymentRouteTextWrap}>
+                <Text style={styles.paymentRouteLabel}>Pickup</Text>
+                <Text style={styles.paymentRouteValue}>
+                  {pendingFeedbackRide.pickupLocation || 'Unknown pickup'}
+                </Text>
+              </View>
+            </View>
+
             <View style={styles.paymentRouteDivider} />
-            <Text style={styles.paymentRouteLabel}>Destination</Text>
-            <Text style={styles.paymentRouteValue}>
-              {pendingFeedbackRide.destination || 'Unknown destination'}
+
+            <View style={styles.paymentRouteStopRow}>
+              <View style={[styles.paymentRouteDot, styles.paymentRouteDotDestination]} />
+              <View style={styles.paymentRouteTextWrap}>
+                <Text style={styles.paymentRouteLabel}>Destination</Text>
+                <Text style={styles.paymentRouteValue}>
+                  {pendingFeedbackRide.destination || 'Unknown destination'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.paymentFareHeroCard}>
+            <Text style={styles.paymentFareHeroLabel}>Final fare</Text>
+            <Text style={styles.paymentFareHeroValue}>
+              {paymentStatus
+                ? formatCurrencyAmount(paymentStatus.amount, paymentStatus.currencyCode)
+                : 'Preparing...'}
+            </Text>
+            <Text style={styles.paymentFareHeroHint}>
+              The amount below is what you approve in PayPal for this completed trip.
             </Text>
           </View>
 
@@ -256,32 +280,32 @@ export default function PassengerPaymentScreen() {
               <Text style={styles.paymentBreakdownValue}>
                 {paymentStatus?.baseFare != null
                   ? formatCurrencyAmount(paymentStatus.baseFare, paymentStatus.currencyCode)
-                  : 'Preparing'}
+                  : '--'}
               </Text>
             </View>
 
             <View style={styles.paymentBreakdownRow}>
-              <Text style={styles.paymentBreakdownLabel}>Estimated distance</Text>
+              <Text style={styles.paymentBreakdownLabel}>Trip distance</Text>
               <Text style={styles.paymentBreakdownValue}>
-                {paymentStatus?.distanceKm != null ? `${paymentStatus.distanceKm.toFixed(2)} km` : 'Preparing'}
+                {paymentStatus?.distanceKm != null ? `${paymentStatus.distanceKm.toFixed(2)} km` : '--'}
               </Text>
             </View>
 
             <View style={styles.paymentBreakdownRow}>
-              <Text style={styles.paymentBreakdownLabel}>Estimated duration</Text>
+              <Text style={styles.paymentBreakdownLabel}>Trip duration</Text>
               <Text style={styles.paymentBreakdownValue}>
-                {paymentStatus?.durationMinutes != null ? `${paymentStatus.durationMinutes} min` : 'Preparing'}
+                {paymentStatus?.durationMinutes != null ? `${paymentStatus.durationMinutes} min` : '--'}
               </Text>
             </View>
 
             <View style={styles.paymentBreakdownDivider} />
 
             <View style={styles.paymentBreakdownRow}>
-              <Text style={styles.paymentTotalLabel}>Total to pay</Text>
-              <Text style={styles.paymentTotalValue}>
-                {paymentStatus
-                  ? formatCurrencyAmount(paymentStatus.amount, paymentStatus.currencyCode)
-                  : 'Preparing...'}
+              <Text style={styles.paymentTotalLabel}>Pricing source</Text>
+              <Text style={styles.paymentBreakdownValue}>
+                {paymentStatus?.pricingModel === 'google_directions_v1'
+                  ? 'Live route pricing'
+                  : 'Standard route pricing'}
               </Text>
             </View>
           </View>
@@ -297,23 +321,25 @@ export default function PassengerPaymentScreen() {
             </Text>
             <Text style={styles.helperText}>
               {isPaymentComplete
-                ? 'Your driver has been notified that the payment is complete.'
+                ? 'Your driver has already been notified that the fare was paid.'
                 : paymentStatus?.payPalOrderId
-                  ? 'If you already approved the ride in PayPal, confirm it below.'
-                  : 'Open PayPal to review the fare and approve the payment.'}
+                  ? 'If you already approved the payment in PayPal, confirm it here to finish the ride checkout.'
+                  : 'Open PayPal to review and approve the final fare.'}
             </Text>
           </View>
 
           {!paymentStatus?.payPalOrderId ? (
-            <TouchableOpacity
-              style={[styles.primaryButton, isCreatingOrder && styles.primaryButtonDisabled]}
-              onPress={handleStartPayment}
-              disabled={isCreatingOrder}
-            >
-              <Text style={styles.primaryButtonText}>
-                {isCreatingOrder ? 'Preparing PayPal...' : 'Pay with PayPal'}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.paymentActionsWrap}>
+              <TouchableOpacity
+                style={[styles.primaryButton, isCreatingOrder && styles.primaryButtonDisabled]}
+                onPress={handleStartPayment}
+                disabled={isCreatingOrder}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {isCreatingOrder ? 'Preparing PayPal...' : 'Open PayPal Checkout'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : !isPaymentComplete ? (
             <View style={styles.paymentActionsWrap}>
               <TouchableOpacity
@@ -322,7 +348,7 @@ export default function PassengerPaymentScreen() {
                 disabled={isCreatingOrder}
               >
                 <Text style={styles.secondaryButtonText}>
-                  {isCreatingOrder ? 'Opening PayPal...' : 'Open PayPal Again'}
+                  {isCreatingOrder ? 'Opening PayPal...' : 'Review in PayPal Again'}
                 </Text>
               </TouchableOpacity>
 
@@ -332,22 +358,28 @@ export default function PassengerPaymentScreen() {
                 disabled={isCapturingOrder}
               >
                 <Text style={styles.primaryButtonText}>
-                  {isCapturingOrder ? 'Confirming Payment...' : 'I Completed Payment'}
+                  {isCapturingOrder ? 'Confirming Payment...' : 'Confirm Payment'}
                 </Text>
               </TouchableOpacity>
+
+              <Text style={styles.paymentActionHint}>
+                After PayPal approval, come back here once and press confirm.
+              </Text>
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() =>
-                router.replace({
-                  pathname: '/(main)/passenger-feedback',
-                  params: { rideId: String(rideId) },
-                })
-              }
-            >
-              <Text style={styles.primaryButtonText}>Continue</Text>
-            </TouchableOpacity>
+            <View style={styles.paymentActionsWrap}>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() =>
+                  router.replace({
+                    pathname: '/(main)/passenger-feedback',
+                    params: { rideId: String(rideId) },
+                  })
+                }
+              >
+                <Text style={styles.primaryButtonText}>Continue to Feedback</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </ScrollView>

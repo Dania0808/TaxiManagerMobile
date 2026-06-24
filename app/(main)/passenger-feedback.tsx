@@ -36,6 +36,7 @@ export default function PassengerFeedbackScreen() {
     setComment,
     handleSubmitFeedback,
     handleGetPendingFeedbackRide,
+    clearCompletedRideFlowState,
   } = usePassengerScreen();
   const [paymentStatus, setPaymentStatus] = useState<RidePaymentStatusType | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(true);
@@ -88,25 +89,35 @@ export default function PassengerFeedbackScreen() {
   const handleSubmitAndReturn = async () => {
     const submitted = await handleSubmitFeedback();
     if (submitted) {
-      router.replace('/(main)/passenger');
+      router.replace({
+        pathname: '/(main)/passenger',
+        params: { completedFlowResetAt: String(Date.now()) },
+      });
     }
   };
-  const handleSkipForNow = () => {
+  const handleSkipForNow = async () => {
     const rideId =
       (rideIdParam && !Number.isNaN(Number(rideIdParam)) ? Number(rideIdParam) : undefined) ??
       pendingFeedbackRide?.id;
     const passengerId = user?.passengerId;
 
     if (!rideId || !passengerId) {
+      clearCompletedRideFlowState();
       router.replace('/(main)/passenger');
       return;
     }
 
-    skipPassengerRideFeedback({ rideId, passengerId })
-      .catch(() => null)
-      .finally(() => {
-        router.replace('/(main)/passenger');
+    try {
+      await skipPassengerRideFeedback({ rideId, passengerId });
+    } catch {
+      // Keep the home flow smooth even if the skip endpoint has a transient issue.
+    } finally {
+      clearCompletedRideFlowState();
+      router.replace({
+        pathname: '/(main)/passenger',
+        params: { completedFlowResetAt: String(Date.now()) },
       });
+    }
   };
   const isPaymentComplete = paymentStatus?.status?.toLowerCase() === 'paid';
 

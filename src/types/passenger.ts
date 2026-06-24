@@ -74,6 +74,11 @@ export type RidePaymentStatusType = {
   baseFare?: number | null;
   distanceKm?: number | null;
   durationMinutes?: number | null;
+  distanceCharge?: number | null;
+  timeCharge?: number | null;
+  passengerSurcharge?: number | null;
+  luggageSurcharge?: number | null;
+  sharedRideDiscount?: number | null;
   payPalOrderId?: string | null;
   payPalCaptureId?: string | null;
   failureReason?: string | null;
@@ -82,13 +87,28 @@ export type RidePaymentStatusType = {
   paidAtUtc?: string | null;
 };
 
+export type RideFareEstimateType = {
+  amount: number;
+  currencyCode: string;
+  pricingModel: string;
+  baseFare?: number | null;
+  distanceKm?: number | null;
+  durationMinutes?: number | null;
+  distanceCharge?: number | null;
+  timeCharge?: number | null;
+  passengerSurcharge?: number | null;
+  luggageSurcharge?: number | null;
+  sharedRideDiscount?: number | null;
+  passengerCount?: number;
+  luggageCount?: number;
+};
+
 export type RideSummary = {
   from: string;
   to: string;
   rideType: RideType;
   passengers: string;
   luggage: string;
-  shared: string;
   scheduledTime: string;
 };
 

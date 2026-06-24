@@ -1,5 +1,5 @@
 import { RideTrackingSnapshot } from '../types/liveTracking';
-import { RidePaymentStatusType } from '../types/passenger';
+import { RideFareEstimateType, RidePaymentStatusType } from '../types/passenger';
 import api from './api';
 
 export async function getPassengerCoinBalance(passengerId: number) {
@@ -41,6 +41,45 @@ export async function getRidePaymentStatus(
 
     throw error;
   }
+}
+
+export async function getRideFareEstimate(payload: {
+  passengerId: number;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  rideType: string;
+  isShared: boolean;
+  passengerCount: number;
+  luggageCount: number;
+}): Promise<RideFareEstimateType> {
+  const response = await api.post('/Payments/estimate', payload);
+  const data = response.data ?? {};
+
+  return {
+    amount: Number(data.amount ?? data.Amount ?? 0),
+    currencyCode: String(data.currencyCode ?? data.CurrencyCode ?? 'ILS'),
+    pricingModel: String(data.pricingModel ?? data.PricingModel ?? 'distance_time_v1'),
+    baseFare:
+      data.baseFare ?? data.BaseFare ?? null,
+    distanceKm:
+      data.distanceKm ?? data.DistanceKm ?? null,
+    durationMinutes:
+      data.durationMinutes ?? data.DurationMinutes ?? null,
+    distanceCharge:
+      data.distanceCharge ?? data.DistanceCharge ?? null,
+    timeCharge:
+      data.timeCharge ?? data.TimeCharge ?? null,
+    passengerSurcharge:
+      data.passengerSurcharge ?? data.PassengerSurcharge ?? null,
+    luggageSurcharge:
+      data.luggageSurcharge ?? data.LuggageSurcharge ?? null,
+    sharedRideDiscount:
+      data.sharedRideDiscount ?? data.SharedRideDiscount ?? null,
+    passengerCount: Number(data.passengerCount ?? data.PassengerCount ?? payload.passengerCount),
+    luggageCount: Number(data.luggageCount ?? data.LuggageCount ?? payload.luggageCount),
+  };
 }
 
 export async function createRidePaymentOrder(payload: {

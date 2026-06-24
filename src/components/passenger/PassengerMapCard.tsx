@@ -77,6 +77,12 @@ export default function PassengerMapCard({
         longitude: trackingSnapshot.passengerLocation.longitude,
       }
     : null;
+  const hasFreshPlannedRoute =
+    !hasActiveRide &&
+    !!pickupLocation.trim() &&
+    !!destination.trim() &&
+    !!livePickupCoords &&
+    !!liveDestinationCoords;
   const routeCoordinates =
     hasActiveRide && driverCoords
       ? currentRide?.status === 'PickedUp' && liveDestinationCoords
@@ -84,7 +90,7 @@ export default function PassengerMapCard({
         : livePickupCoords
           ? [driverCoords, livePickupCoords]
           : []
-      : livePickupCoords && liveDestinationCoords
+      : hasFreshPlannedRoute
         ? [livePickupCoords, liveDestinationCoords]
         : [];
   const activeRideCopy = getActiveRideCopy(currentRide?.status);
@@ -98,19 +104,19 @@ export default function PassengerMapCard({
         : currentRide?.status === 'Accepted'
           ? 'Driver found'
           : 'Live'
-    : livePickupCoords && liveDestinationCoords
+    : hasFreshPlannedRoute
       ? 'Route ready'
       : 'Start here';
   const overlaySubtitle = hasActiveRide
     ? activeRideCopy.subtitle
-    : livePickupCoords && liveDestinationCoords
+    : hasFreshPlannedRoute
       ? 'Pickup and destination are pinned on the map.'
       : 'Choose where you want to be picked up and where you are going.';
 
   return (
     <View style={styles.mapHeroCard}>
       <MapView style={styles.mapHero} region={mapRegion}>
-        {livePickupCoords && (
+        {(hasActiveRide || hasFreshPlannedRoute) && livePickupCoords && (
           <Marker
             coordinate={livePickupCoords}
             title="Pickup"
@@ -119,7 +125,7 @@ export default function PassengerMapCard({
           />
         )}
 
-        {liveDestinationCoords && (
+        {(hasActiveRide || hasFreshPlannedRoute) && liveDestinationCoords && (
           <Marker
             coordinate={liveDestinationCoords}
             title="Destination"
@@ -189,12 +195,12 @@ export default function PassengerMapCard({
               </View>
             </>
           ) : null}
-          {!hasActiveRide && livePickupCoords ? (
+          {!hasActiveRide && hasFreshPlannedRoute && livePickupCoords ? (
             <View style={styles.mapOverlayMetaPill}>
               <Text style={styles.mapOverlayMetaText}>Pickup pinned</Text>
             </View>
           ) : null}
-          {!hasActiveRide && liveDestinationCoords ? (
+          {!hasActiveRide && hasFreshPlannedRoute && liveDestinationCoords ? (
             <View style={styles.mapOverlayMetaPill}>
               <Text style={styles.mapOverlayMetaText}>Destination pinned</Text>
             </View>

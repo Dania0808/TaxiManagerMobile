@@ -2,11 +2,13 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { passengerStyles as styles } from '../../styles/passengerStyles';
-import { LatLng, RideSummary, RideType } from '../../types/passenger';
+import { LatLng, RideFareEstimateType, RideSummary, RideType } from '../../types/passenger';
 
 type PassengerBottomSheetProps = {
   rideSummary: RideSummary;
   rideType: RideType;
+  rideFareEstimate?: RideFareEstimateType | null;
+  isLoadingRideFareEstimate?: boolean;
   pickupCoords?: LatLng | null;
   destinationCoords?: LatLng | null;
   onBack: () => void;
@@ -17,12 +19,23 @@ type PassengerBottomSheetProps = {
 export default function PassengerBottomSheet({
   rideSummary,
   rideType,
+  rideFareEstimate,
+  isLoadingRideFareEstimate = false,
   pickupCoords,
   destinationCoords,
   onBack,
   onOrderNow,
   isSubmitting = false,
 }: PassengerBottomSheetProps) {
+  const formatAmount = (amount?: number | null, currencyCode?: string | null) => {
+    if (amount == null || !Number.isFinite(amount)) return 'Preparing...';
+    const normalizedCurrency = (currencyCode || 'ILS').toUpperCase();
+    if (normalizedCurrency === 'ILS') {
+      return `${String.fromCharCode(0x20aa)}${amount.toFixed(2)}`;
+    }
+    return `${normalizedCurrency} ${amount.toFixed(2)}`;
+  };
+
   const hasRoute = !!pickupCoords && !!destinationCoords;
 
   const previewRegion = hasRoute
@@ -126,19 +139,54 @@ export default function PassengerBottomSheet({
               <Text style={styles.bottomValue}>{rideSummary.rideType}</Text>
             </View>
 
-            {rideType === 'Immediate' && (
-              <View style={styles.bottomSheetRow}>
-                <Text style={styles.bottomLabel}>Shared Ride</Text>
-                <Text style={styles.bottomValue}>{rideSummary.shared}</Text>
-              </View>
-            )}
-
             {rideType === 'Scheduled' && (
               <View style={styles.bottomSheetRow}>
                 <Text style={styles.bottomLabel}>Scheduled</Text>
                 <Text style={styles.bottomValue}>{rideSummary.scheduledTime}</Text>
               </View>
             )}
+          </View>
+
+          <View style={styles.bottomFareCard}>
+            <View style={styles.bottomFareHeader}>
+              <View style={styles.bottomFareIconWrap}>
+                <MaterialCommunityIcons name="cash-fast" size={18} color="#111827" />
+              </View>
+              <View style={styles.bottomFareTextWrap}>
+                <Text style={styles.bottomFareTitle}>Estimated fare</Text>
+                <Text style={styles.bottomFareSubtitle}>
+                  {isLoadingRideFareEstimate
+                    ? 'Calculating the route price...'
+                    : 'This is an approximate fare before your ride is requested.'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.bottomFareStatsRow}>
+              <View style={styles.bottomFareStatCard}>
+                <Text style={styles.bottomFareStatLabel}>Distance</Text>
+                <Text style={styles.bottomFareStatValue}>
+                  {rideFareEstimate?.distanceKm != null
+                    ? `${rideFareEstimate.distanceKm.toFixed(2)} km`
+                    : '--'}
+                </Text>
+              </View>
+              <View style={styles.bottomFareStatCard}>
+                <Text style={styles.bottomFareStatLabel}>Duration</Text>
+                <Text style={styles.bottomFareStatValue}>
+                  {rideFareEstimate?.durationMinutes != null
+                    ? `${rideFareEstimate.durationMinutes} min`
+                    : '--'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.bottomFareTotalRow}>
+              <Text style={styles.bottomFareTotalLabel}>Approximate total</Text>
+              <Text style={styles.bottomFareTotalValue}>
+                {formatAmount(rideFareEstimate?.amount, rideFareEstimate?.currencyCode)}
+              </Text>
+            </View>
           </View>
         </ScrollView>
 

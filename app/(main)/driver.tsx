@@ -57,6 +57,15 @@ function formatTripDuration(minutes: number | null | undefined) {
   return `${minutes} min estimated trip`;
 }
 
+function getRideLoadLabel(
+  passengerCount?: number | null,
+  luggageCount?: number | null
+) {
+  const passengers = Math.max(1, passengerCount ?? 1);
+  const luggage = Math.max(0, luggageCount ?? 0);
+  return `${passengers} passenger${passengers === 1 ? '' : 's'} • ${luggage} bag${luggage === 1 ? '' : 's'}`;
+}
+
 function formatCurrencyAmount(
   amount: number | null | undefined,
   currencyCode?: string | null
@@ -785,6 +794,13 @@ export default function DriverScreen() {
               </View>
 
               <View style={styles.tripInfoBlockWide}>
+                <Text style={styles.cardBodyTitle}>Ride load</Text>
+                <Text style={styles.cardBodyValue}>
+                  {getRideLoadLabel(currentRide.passengerCount, currentRide.luggageCount)}
+                </Text>
+              </View>
+
+              <View style={styles.tripInfoBlockWide}>
                 <Text style={styles.cardBodyTitle}>Payment</Text>
                 <Text style={styles.cardBodyValue}>
                   {isDriverPaymentConfirmed
@@ -995,6 +1011,14 @@ export default function DriverScreen() {
                           {selectedOpenRide.isShared ? 'Shared ride' : 'Private ride'}
                         </Text>
                       </View>
+                      <View style={styles.metaPill}>
+                        <Text style={styles.metaPillText}>
+                          {getRideLoadLabel(
+                            selectedOpenRide.passengerCount,
+                            selectedOpenRide.luggageCount
+                          )}
+                        </Text>
+                      </View>
                     </View>
 
                     <TouchableOpacity
@@ -1128,14 +1152,19 @@ export default function DriverScreen() {
                           <View style={styles.metaPill}>
                             <Text style={styles.metaPillText}>{ride.rideType}</Text>
                           </View>
-                          <View style={styles.metaPill}>
-                            <Text style={styles.metaPillText}>
-                              {ride.isShared ? 'Shared ride' : 'Private ride'}
-                            </Text>
-                          </View>
+                        <View style={styles.metaPill}>
+                          <Text style={styles.metaPillText}>
+                            {ride.isShared ? 'Shared ride' : 'Private ride'}
+                          </Text>
                         </View>
+                        <View style={styles.metaPill}>
+                          <Text style={styles.metaPillText}>
+                            {getRideLoadLabel(ride.passengerCount, ride.luggageCount)}
+                          </Text>
+                        </View>
+                      </View>
 
-                        <TouchableOpacity
+                      <TouchableOpacity
                           style={[
                             styles.secondaryButton,
                             activeClaimRideId === ride.id && styles.secondaryButtonDisabled,
