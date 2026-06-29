@@ -31,6 +31,23 @@ import {
 } from '../types/passenger';
 import { RideTrackingSnapshot } from '../types/liveTracking';
 
+function formatScheduledRideTime(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return 'Not set';
+
+  const parsed = new Date(trimmed.replace(' ', 'T'));
+  if (Number.isNaN(parsed.getTime())) return trimmed;
+
+  return parsed.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function usePassengerScreen() {
   const previousRideStatusRef = useRef<string | null>(null);
   const [user, setUser] = useState<StoredUser | null>(null);
@@ -241,7 +258,12 @@ export function usePassengerScreen() {
       rideType,
       passengers: passengerCount || '1',
       luggage: luggageCount || '0',
-      scheduledTime: rideType === 'Scheduled' ? scheduledTime || 'Not set' : '-',
+      scheduledTime:
+        rideType === 'Scheduled'
+          ? scheduledTime.trim()
+            ? formatScheduledRideTime(scheduledTime)
+            : 'Not set'
+          : '-',
     }),
     [
       pickupLocation,

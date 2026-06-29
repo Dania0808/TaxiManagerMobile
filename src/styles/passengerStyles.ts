@@ -232,10 +232,6 @@ export const passengerStyles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-  modalKeyboardWrap: {
-    width: '100%',
-  },
-
   modalScrollContent: {
     flexGrow: 1,
     justifyContent: 'center',

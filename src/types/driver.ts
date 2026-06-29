@@ -46,6 +46,7 @@ export type AvailableRideType = {
   passengerId?: number;
   requestedAt?: string | null;
   createdAt?: string | null;
+  scheduledTime?: string | null;
   estimatedTripDurationMinutes?: number | null;
   estimatedPickupMinutes?: number | null;
   distanceToPickupKm?: number | null;
@@ -76,6 +77,7 @@ export type DriverCurrentRideType = {
   passengerName?: string | null;
   requestedAt?: string | null;
   createdAt?: string | null;
+  scheduledTime?: string | null;
   estimatedTripDurationMinutes?: number | null;
   estimatedPickupMinutes?: number | null;
   fitStatus?: string | null;

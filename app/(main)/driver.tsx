@@ -57,6 +57,25 @@ function formatTripDuration(minutes: number | null | undefined) {
   return `${minutes} min estimated trip`;
 }
 
+function formatScheduledRideTime(value?: string | Date | null) {
+  if (!value) return 'Scheduled';
+
+  const parsed =
+    value instanceof Date
+      ? value
+      : new Date(String(value).replace(' ', 'T'));
+
+  if (Number.isNaN(parsed.getTime())) return 'Scheduled';
+
+  return parsed.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function getRideLoadLabel(
   passengerCount?: number | null,
   luggageCount?: number | null
@@ -821,9 +840,16 @@ export default function DriverScreen() {
               </View>
               <View style={styles.metaPill}>
                 <Text style={styles.metaPillText}>
-                  {currentRide.isShared ? 'Shared ride' : 'Private ride'}
+                  {getRideLoadLabel(currentRide.passengerCount, currentRide.luggageCount)}
                 </Text>
               </View>
+              {currentRide.rideType === 'Scheduled' && currentRide.scheduledTime ? (
+                <View style={styles.metaPill}>
+                  <Text style={styles.metaPillText}>
+                    {formatScheduledRideTime(currentRide.scheduledTime)}
+                  </Text>
+                </View>
+              ) : null}
               <View style={styles.metaPill}>
                 <Text style={styles.metaPillText}>{tripStage.targetLabel}</Text>
               </View>
@@ -1008,17 +1034,20 @@ export default function DriverScreen() {
                       </View>
                       <View style={styles.metaPill}>
                         <Text style={styles.metaPillText}>
-                          {selectedOpenRide.isShared ? 'Shared ride' : 'Private ride'}
-                        </Text>
-                      </View>
-                      <View style={styles.metaPill}>
-                        <Text style={styles.metaPillText}>
                           {getRideLoadLabel(
                             selectedOpenRide.passengerCount,
                             selectedOpenRide.luggageCount
                           )}
                         </Text>
                       </View>
+                      {selectedOpenRide.rideType === 'Scheduled' &&
+                      selectedOpenRide.scheduledTime ? (
+                        <View style={styles.metaPill}>
+                          <Text style={styles.metaPillText}>
+                            {formatScheduledRideTime(selectedOpenRide.scheduledTime)}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
 
                     <TouchableOpacity
@@ -1152,19 +1181,21 @@ export default function DriverScreen() {
                           <View style={styles.metaPill}>
                             <Text style={styles.metaPillText}>{ride.rideType}</Text>
                           </View>
-                        <View style={styles.metaPill}>
-                          <Text style={styles.metaPillText}>
-                            {ride.isShared ? 'Shared ride' : 'Private ride'}
-                          </Text>
+                          <View style={styles.metaPill}>
+                            <Text style={styles.metaPillText}>
+                              {getRideLoadLabel(ride.passengerCount, ride.luggageCount)}
+                            </Text>
+                          </View>
+                          {ride.rideType === 'Scheduled' && ride.scheduledTime ? (
+                            <View style={styles.metaPill}>
+                              <Text style={styles.metaPillText}>
+                                {formatScheduledRideTime(ride.scheduledTime)}
+                              </Text>
+                            </View>
+                          ) : null}
                         </View>
-                        <View style={styles.metaPill}>
-                          <Text style={styles.metaPillText}>
-                            {getRideLoadLabel(ride.passengerCount, ride.luggageCount)}
-                          </Text>
-                        </View>
-                      </View>
 
-                      <TouchableOpacity
+                        <TouchableOpacity
                           style={[
                             styles.secondaryButton,
                             activeClaimRideId === ride.id && styles.secondaryButtonDisabled,
